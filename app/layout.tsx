@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "짤 따라하기",
-  description: "짤 따라하기 게임의 자동 카메라 촬영",
+  title: "FollowMe",
+  description: "친구들과 함께하는 실시간 밈 따라하기 게임",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
