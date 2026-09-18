@@ -315,6 +315,37 @@ export default function MultiplayerPoc() {
 
   useEffect(() => {
     const round = room?.round;
+    if (!room || !round || round.status !== "judging") return;
+    let active = true;
+    let timer: number | undefined;
+    const recoverIfStale = async () => {
+      try {
+        const session = await ensureAuthenticated();
+        const response = await fetch(`/api/rounds/${round.id}/recover`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        if (!response.ok) throw new Error("AI 판정 복구 상태를 확인하지 못했습니다.");
+        const body = await response.json() as { recovered: boolean };
+        if (!active) return;
+        if (body.recovered) {
+          await loadSnapshot(room.code);
+          return;
+        }
+      } catch (recoveryError) {
+        if (active) console.error("Stale judging recovery request failed", messageFrom(recoveryError));
+      }
+      if (active) timer = window.setTimeout(() => void recoverIfStale(), 5_000);
+    };
+    void recoverIfStale();
+    return () => {
+      active = false;
+      if (timer !== undefined) window.clearTimeout(timer);
+    };
+  }, [ensureAuthenticated, loadSnapshot, room]);
+
+  useEffect(() => {
+    const round = room?.round;
     if (!room || !round || !["complete", "invalid"].includes(round.status) || !round.result_ends_at) return;
     let active = true;
     let timer: number | undefined;

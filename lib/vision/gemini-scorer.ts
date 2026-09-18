@@ -5,6 +5,7 @@ import type { ParticipantImage, VisionImage, VisionScorer, VisionScore } from ".
 import { validateScores } from "./scoring";
 
 const MODEL = "gemini-3.6-flash";
+const GEMINI_ATTEMPT_TIMEOUT_MS = 20_000;
 
 const SYSTEM_INSTRUCTION = `You are a strict image-similarity judge for a meme imitation game.
 Compare every participant image only with visual elements actually visible in the reference image.
@@ -54,6 +55,11 @@ export class GeminiVisionScorer implements VisionScorer {
         },
       ],
       config: {
+        abortSignal: AbortSignal.timeout(GEMINI_ATTEMPT_TIMEOUT_MS),
+        httpOptions: {
+          timeout: GEMINI_ATTEMPT_TIMEOUT_MS,
+          retryOptions: { attempts: 1 },
+        },
         systemInstruction: SYSTEM_INSTRUCTION,
         temperature: 0,
         responseMimeType: "application/json",

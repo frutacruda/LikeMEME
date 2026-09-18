@@ -8,6 +8,15 @@ import type { ParticipantImage, VisionImage } from "@/lib/vision/scoring";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
+const ROUTE_WORK_BUDGET_MS = 48_000;
+const AUTH_TIMEOUT_MS = 4_000;
+const CLAIM_TIMEOUT_MS = 4_000;
+const DB_READ_TIMEOUT_MS = 4_000;
+const REFERENCE_LOAD_TIMEOUT_MS = 2_000;
+const STORAGE_DOWNLOAD_TIMEOUT_MS = 6_000;
+const COMPLETE_ROUND_TIMEOUT_MS = 4_000;
+const INVALIDATE_ROUND_TIMEOUT_MS = 5_000;
+
 type RouteContext = { params: Promise<{ roundId: string }> };
 type JudgingStage =
   | "round_query"
@@ -16,7 +25,8 @@ type JudgingStage =
   | "storage_download"
   | "gemini_scoring"
   | "score_mapping"
-  | "complete_round";
+  | "complete_round"
+  | "route_deadline";
 
 class JudgingStageError extends Error {
   constructor(
@@ -51,6 +61,25 @@ function stageError(stage: JudgingStage, error: unknown): never {
   throw new JudgingStageError(stage, error);
 }
 
+class OperationTimeoutError extends Error {
+  constructor(stage: string, timeoutMs: number) {
+    super(`${stage} exceeded its ${timeoutMs}ms time budget.`);
+    this.name = "OperationTimeoutError";
+  }
+}
+
+async function withTimeout<T>(operation: PromiseLike<T>, stage: string, timeoutMs: number): Promise<T> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new OperationTimeoutError(stage, timeoutMs)), timeoutMs);
+  });
+  try {
+    return await Promise.race([operation, timeout]);
+  } finally {
+    if (timer) clearTimeout(timer);
+  }
+}
+
 function bearerToken(request: Request) {
   const authorization = request.headers.get("authorization");
   if (!authorization?.startsWith("Bearer ")) return null;
@@ -70,6 +99,7 @@ async function loadReference(referencePath: string): Promise<VisionImage> {
 }
 
 export async function POST(request: Request, { params }: RouteContext) {
+  const routeStartedAt = performance.now();
   const token = bearerToken(request);
   if (!token) {
     console.error("Round judging authentication failed", {
@@ -85,7 +115,18 @@ export async function POST(request: Request, { params }: RouteContext) {
   }
 
   const supabase = getSupabaseServiceClient();
-  const { data: userData, error: userError } = await supabase.auth.getUser(token);
+  let userResult;
+  try {
+    userResult = await withTimeout(supabase.auth.getUser(token), "jwt_verification", AUTH_TIMEOUT_MS);
+  } catch (error) {
+    console.error("Round judging authentication failed", {
+      roundId,
+      stage: "jwt_verification",
+      ...errorDetails(error),
+    });
+    return NextResponse.json({ error: "Could not verify Supabase session." }, { status: 503 });
+  }
+  const { data: userData, error: userError } = userResult;
   if (userError || !userData.user) {
     console.error("Round judging authentication failed", {
       roundId,
@@ -95,10 +136,25 @@ export async function POST(request: Request, { params }: RouteContext) {
     return NextResponse.json({ error: "Invalid Supabase session." }, { status: 401 });
   }
 
-  const { data: claimed, error: claimError } = await supabase.rpc("claim_round_judging", {
-    target_round_id: roundId,
-    requester_user_id: userData.user.id,
-  });
+  let claimResult;
+  try {
+    claimResult = await withTimeout(
+      supabase.rpc("claim_round_judging", {
+        target_round_id: roundId,
+        requester_user_id: userData.user.id,
+      }),
+      "claim_round",
+      CLAIM_TIMEOUT_MS,
+    );
+  } catch (error) {
+    console.error("Round judging claim failed", {
+      roundId,
+      stage: "claim_round",
+      ...errorDetails(error),
+    });
+    return NextResponse.json({ error: "Could not start judging." }, { status: 503 });
+  }
+  const { data: claimed, error: claimError } = claimResult;
   if (claimError) {
     console.error("Round judging claim failed", {
       roundId,
@@ -109,44 +165,101 @@ export async function POST(request: Request, { params }: RouteContext) {
   }
   if (!claimed) return NextResponse.json({ claimed: false });
 
+  const remainingWorkMs = () => Math.floor(ROUTE_WORK_BUDGET_MS - (performance.now() - routeStartedAt));
+  const runStage = async <T>(stage: JudgingStage, timeoutMs: number, operation: () => PromiseLike<T>): Promise<T> => {
+    const startedAt = performance.now();
+    const availableMs = Math.min(timeoutMs, remainingWorkMs());
+    if (availableMs <= 0) stageError("route_deadline", new OperationTimeoutError(stage, 0));
+    try {
+      const result = await withTimeout(operation(), stage, availableMs);
+      console.info("Round judging stage completed", {
+        roundId,
+        stage,
+        elapsedMs: Math.round(performance.now() - startedAt),
+      });
+      return result;
+    } catch (error) {
+      console.error("Round judging stage failed", {
+        roundId,
+        stage,
+        elapsedMs: Math.round(performance.now() - startedAt),
+        ...errorDetails(error),
+      });
+      stageError(stage, error);
+    }
+  };
+
   try {
-    const { data: round, error: roundError } = await supabase
-      .from("rounds")
-      .select("reference_image_path")
-      .eq("id", roundId)
-      .single();
+    const { data: round, error: roundError } = await runStage(
+      "round_query",
+      DB_READ_TIMEOUT_MS,
+      () => supabase
+        .from("rounds")
+        .select("reference_image_path")
+        .eq("id", roundId)
+        .single(),
+    );
     if (roundError || !round) stageError("round_query", roundError ?? new Error("Round not found."));
 
-    const { data: submissions, error: submissionsError } = await supabase
-      .from("round_submissions")
-      .select("player_id, storage_object_path, submitted_at")
-      .eq("round_id", roundId)
-      .order("submitted_at");
+    const { data: submissions, error: submissionsError } = await runStage(
+      "submission_query",
+      DB_READ_TIMEOUT_MS,
+      () => supabase
+        .from("round_submissions")
+        .select("player_id, storage_object_path, submitted_at")
+        .eq("round_id", roundId)
+        .order("submitted_at"),
+    );
     if (submissionsError || !submissions?.length) {
       stageError("submission_query", submissionsError ?? new Error("Round submissions not found."));
     }
 
-    let reference: VisionImage;
-    try {
-      reference = await loadReference(round.reference_image_path);
-    } catch (error) {
-      stageError("reference_load", error);
-    }
+    const reference: VisionImage = await runStage(
+      "reference_load",
+      REFERENCE_LOAD_TIMEOUT_MS,
+      () => loadReference(round.reference_image_path),
+    );
     const idToPlayer = new Map<string, string>();
-    const participants: ParticipantImage[] = await Promise.all(submissions.map(async (submission, index) => {
-      const participantId = `p${index + 1}`;
-      idToPlayer.set(participantId, submission.player_id);
-      const { data, error } = await supabase.storage.from("round-submissions").download(submission.storage_object_path);
-      if (error || !data) stageError("storage_download", error ?? new Error("Submission image download failed."));
-      return {
-        id: participantId,
-        image: { bytes: new Uint8Array(await data.arrayBuffer()), mimeType: "image/jpeg" },
-      };
-    }));
+    const participants: ParticipantImage[] = await runStage(
+      "storage_download",
+      STORAGE_DOWNLOAD_TIMEOUT_MS,
+      () => Promise.all(submissions.map(async (submission, index) => {
+        const participantId = `p${index + 1}`;
+        idToPlayer.set(participantId, submission.player_id);
+        const { data, error } = await supabase.storage.from("round-submissions").download(submission.storage_object_path);
+        if (error || !data) throw error ?? new Error("Submission image download failed.");
+        return {
+          id: participantId,
+          image: { bytes: new Uint8Array(await data.arrayBuffer()), mimeType: "image/jpeg" },
+        };
+      })),
+    );
 
     let result;
     try {
-      result = await scoreImages(reference, participants);
+      const scoringStartedAt = performance.now();
+      result = await withTimeout(
+        scoreImages(reference, participants, undefined, {
+          onAttemptComplete: ({ attempt, elapsedMs, outcome, error }) => {
+            const details = error === undefined ? {} : errorDetails(error);
+            const log = outcome === "success" ? console.info : console.error;
+            log("Round judging Gemini attempt completed", {
+              roundId,
+              stage: `gemini_attempt_${attempt}`,
+              elapsedMs,
+              outcome,
+              ...details,
+            });
+          },
+        }),
+        "gemini_scoring",
+        Math.max(1, remainingWorkMs()),
+      );
+      console.info("Round judging stage completed", {
+        roundId,
+        stage: "gemini_scoring",
+        elapsedMs: Math.round(performance.now() - scoringStartedAt),
+      });
     } catch (error) {
       stageError("gemini_scoring", error);
     }
@@ -160,24 +273,44 @@ export async function POST(request: Request, { params }: RouteContext) {
       stageError("score_mapping", new Error("AI score mapping failed."));
     }
 
-    const { error: completeError } = await supabase.rpc("complete_round_judging", {
-      target_round_id: roundId,
-      score_rows: scoreRows,
-    });
+    const { error: completeError } = await runStage(
+      "complete_round",
+      COMPLETE_ROUND_TIMEOUT_MS,
+      () => supabase.rpc("complete_round_judging", {
+        target_round_id: roundId,
+        score_rows: scoreRows,
+      }),
+    );
     if (completeError) stageError("complete_round", completeError);
     return NextResponse.json({ claimed: true, complete: true });
   } catch (error) {
     const stage = error instanceof JudgingStageError ? error.stage : "unexpected";
     const original = error instanceof JudgingStageError ? error.original : error;
     console.error("Round judging failed", { roundId, stage, ...errorDetails(original) });
-    const { error: invalidationError } = await supabase.rpc("invalidate_round_judging", {
-      target_round_id: roundId,
-    });
+    const invalidationStartedAt = performance.now();
+    let invalidationError: unknown;
+    try {
+      const result = await withTimeout(
+        supabase.rpc("invalidate_round_judging", { target_round_id: roundId }),
+        "invalidate_round",
+        INVALIDATE_ROUND_TIMEOUT_MS,
+      );
+      invalidationError = result.error;
+    } catch (error) {
+      invalidationError = error;
+    }
     if (invalidationError) {
       console.error("Round invalidation failed", {
         roundId,
         stage: "invalidate_round",
+        elapsedMs: Math.round(performance.now() - invalidationStartedAt),
         ...errorDetails(invalidationError),
+      });
+    } else {
+      console.info("Round judging stage completed", {
+        roundId,
+        stage: "invalidate_round",
+        elapsedMs: Math.round(performance.now() - invalidationStartedAt),
       });
     }
     return NextResponse.json({ error: "AI judging failed." }, { status: 502 });
