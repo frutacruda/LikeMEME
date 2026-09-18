@@ -90,6 +90,14 @@ FollowMe is a real-time multiplayer web game for 2–4 players. Each round, all 
 | FINAL-03 | Display player results | Game ends | Show accumulated wins and final result per player | Preserve player colors |
 | FINAL-04 | Return to main | Select Return to Main | End game and navigate to main | Captured photos are deleted for MVP |
 
+### 3.7 BGM / Sound
+
+| ID | Feature | Trigger | Required behavior | Policy / exception |
+|---|---|---|---|---|
+| SOUND-01 | Game BGM | Game experience begins | Provide background music during game progression | Start playback only when permitted by browser autoplay policy; user interaction may be required |
+| SOUND-02 | BGM toggle | User selects sound control | Allow the user to turn BGM on/off | Preserve the current setting during the game where feasible |
+| SOUND-03 | Audio coordination | Round/result transitions | Keep BGM behavior compatible with countdown, capture, score reveal, and result presentation | Exact track selection and per-state BGM transitions are defined later |
+
 ## 4. AI Scoring Rules
 
 All three categories return **integer scores from 0 to 10 in increments of 1**.
