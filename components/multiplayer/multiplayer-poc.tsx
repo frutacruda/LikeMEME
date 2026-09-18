@@ -5,7 +5,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCameraCapture } from "@/components/camera/use-camera-capture";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
-import type { RoomSnapshot } from "@/lib/supabase/types";
+import type { FinalResult, RoomPlayer, RoomSnapshot, RoundSnapshot } from "@/lib/supabase/types";
 
 const ROOM_STORAGE_KEY = "likememe.room-code";
 const seatColors = ["#FF6B6B", "#4DABF7", "#51CF66", "#FFD43B"];
@@ -21,6 +21,98 @@ function isDuplicateUpload(error: unknown) {
   return String(value.statusCode) === "409" || /duplicate|already exists/i.test(value.message ?? "");
 }
 
+function RoundResultView({
+  round,
+  players,
+  videoRef,
+  cameraError,
+}: {
+  round: RoundSnapshot;
+  players: RoomPlayer[];
+  videoRef: (node: HTMLVideoElement | null) => void;
+  cameraError: string | null;
+}) {
+  const [revealStep, setRevealStep] = useState(round.status === "invalid" ? 4 : 1);
+
+  useEffect(() => {
+    if (round.status !== "complete") return;
+    const timers = [
+      window.setTimeout(() => setRevealStep(2), 700),
+      window.setTimeout(() => setRevealStep(3), 1400),
+      window.setTimeout(() => setRevealStep(4), 2100),
+    ];
+    return () => timers.forEach(window.clearTimeout);
+  }, [round.status]);
+
+  const winners = round.scores
+    .filter((score) => score.is_winner)
+    .map((score) => players.find((player) => player.id === score.player_id)?.nickname)
+    .filter(Boolean);
+
+  return (
+    <main className="shell">
+      <section className="card result-card">
+        <span className="eyebrow">ROUND {round.number} RESULT · {round.number}/5</span>
+        <h1>{round.status === "invalid" ? "라운드 무효" : "라운드 결과"}</h1>
+        {round.status === "invalid" ? (
+          <p className="error">AI 판정에 실패했습니다. 승리와 점수 없이 다음 라운드로 진행합니다.</p>
+        ) : (
+          <>
+            <div className="score-table">
+              {round.scores.map((score) => {
+                const player = players.find((item) => item.id === score.player_id);
+                return (
+                  <div className={`score-row ${revealStep >= 4 && score.is_winner ? "winner" : ""}`} key={score.player_id}>
+                    <strong>{player?.nickname}</strong>
+                    <span>표정 {score.expression * 10}%</span>
+                    <span>{revealStep >= 2 ? `포즈 ${score.pose * 10}%` : "포즈 ···"}</span>
+                    <span>{revealStep >= 3 ? `스타일 ${score.style * 10}%` : "스타일 ···"}</span>
+                    <b>{revealStep >= 4 ? `${Math.round(score.total / 30 * 100)}%` : "···"}</b>
+                  </div>
+                );
+              })}
+            </div>
+            {revealStep >= 4 && <p className="winner-copy">Round {round.number} Winner: {winners.join(" · ")}</p>}
+          </>
+        )}
+        {round.number < 5 && (
+          <>
+            <p className="waiting-copy">다음 라운드 카메라 준비 및 자동 진행 중…</p>
+            <div className="camera-frame result-camera"><video ref={videoRef} autoPlay muted playsInline className="camera-video" /></div>
+            {cameraError && <p className="error">{cameraError}</p>}
+          </>
+        )}
+        {round.number === 5 && <p className="waiting-copy">최종 결과를 계산하는 중…</p>}
+      </section>
+    </main>
+  );
+}
+
+function FinalResultView({ results, players }: { results: FinalResult[]; players: RoomPlayer[] }) {
+  return (
+    <main className="shell">
+      <section className="card result-card">
+        <span className="eyebrow">GAME COMPLETE</span>
+        <h1>최종 결과</h1>
+        <div className="final-table">
+          {results.map((result) => {
+            const player = players.find((item) => item.id === result.player_id);
+            return (
+              <div className="final-row" key={result.player_id}>
+                <b>{result.rank}위</b>
+                <strong>{player?.nickname}</strong>
+                <span>{result.round_wins}승</span>
+                <span>누적 {result.cumulative_total}점</span>
+              </div>
+            );
+          })}
+        </div>
+        <p className="muted">5라운드 게임이 종료되었습니다.</p>
+      </section>
+    </main>
+  );
+}
+
 export default function MultiplayerPoc() {
   const supabase = useMemo(() => getSupabaseBrowserClient(), []);
   const {
@@ -32,6 +124,7 @@ export default function MultiplayerPoc() {
     prepare,
     schedule,
     retryCapture,
+    prepareNextRound,
   } = useCameraCapture();
   const [ready, setReady] = useState(false);
   const [authReady, setAuthReady] = useState(false);
@@ -44,8 +137,10 @@ export default function MultiplayerPoc() {
   const [uploadState, setUploadState] = useState<"idle" | "uploading" | "submitted" | "error">("idle");
   const [uploadError, setUploadError] = useState<string | null>(null);
   const roomCodeRef = useRef<string | null>(null);
+  const activeRoundIdRef = useRef<string | null>(null);
   const scheduledRoundRef = useRef<string | null>(null);
   const judgingRequestRef = useRef<string | null>(null);
+  const preparedForNextRef = useRef<string | null>(null);
 
   const ensureAuthenticated = useCallback(async () => {
     const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
@@ -66,6 +161,14 @@ export default function MultiplayerPoc() {
     const { data, error: rpcError } = await supabase.rpc("get_room_snapshot", { room_code: roomCode });
     if (rpcError) throw rpcError;
     const snapshot = data as RoomSnapshot;
+    if (snapshot.round?.id !== activeRoundIdRef.current) {
+      activeRoundIdRef.current = snapshot.round?.id ?? null;
+      scheduledRoundRef.current = null;
+      judgingRequestRef.current = null;
+      setUploadState("idle");
+      setUploadError(null);
+      setError(null);
+    }
     roomCodeRef.current = snapshot.code;
     setRoom(snapshot);
     setPendingCode(null);
@@ -99,8 +202,8 @@ export default function MultiplayerPoc() {
   useEffect(() => {
     if (!room?.id) return;
     const refresh = () => {
-      const roomCode = roomCodeRef.current;
-      if (roomCode) void loadSnapshot(roomCode).catch((refreshError) => setError(messageFrom(refreshError)));
+      const code = roomCodeRef.current;
+      if (code) void loadSnapshot(code).catch((refreshError) => setError(messageFrom(refreshError)));
     };
     const channel = supabase
       .channel(`room:${room.id}`)
@@ -109,6 +212,7 @@ export default function MultiplayerPoc() {
       .on("postgres_changes", { event: "*", schema: "public", table: "rounds", filter: `room_id=eq.${room.id}` }, refresh)
       .on("postgres_changes", { event: "*", schema: "public", table: "round_submissions" }, refresh)
       .on("postgres_changes", { event: "*", schema: "public", table: "round_scores" }, refresh)
+      .on("postgres_changes", { event: "*", schema: "public", table: "final_results", filter: `room_id=eq.${room.id}` }, refresh)
       .subscribe((status) => { if (status === "SUBSCRIBED") refresh(); });
     const onVisible = () => { if (document.visibilityState === "visible") refresh(); };
     window.addEventListener("online", refresh);
@@ -120,16 +224,41 @@ export default function MultiplayerPoc() {
     };
   }, [loadSnapshot, room?.id, supabase]);
 
+  const ownSubmitted = Boolean(room?.round?.submitted_player_ids.includes(room.current_player_id));
+
   useEffect(() => {
-    if (!room?.round || room.round.status !== "scheduled" || cameraPhase !== "ready") return;
+    const round = room?.round;
+    if (!round || round.status !== "scheduled" || ownSubmitted || cameraPhase !== "idle") return;
+    const timer = window.setTimeout(() => {
+      void prepare().catch((prepareError) => setError(messageFrom(prepareError)));
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [cameraPhase, ownSubmitted, prepare, room?.round]);
+
+  useEffect(() => {
+    if (!room?.round || room.round.status !== "scheduled" || ownSubmitted || cameraPhase !== "ready") return;
     if (scheduledRoundRef.current === room.round.id) return;
     scheduledRoundRef.current = room.round.id;
     schedule(Date.parse(room.round.starts_at));
-  }, [cameraPhase, room?.round, schedule]);
+  }, [cameraPhase, ownSubmitted, room?.round, schedule]);
+
+  useEffect(() => {
+    const round = room?.round;
+    if (!round || !["complete", "invalid"].includes(round.status) || round.number >= 5) return;
+    if (preparedForNextRef.current === round.id) return;
+    preparedForNextRef.current = round.id;
+    const timer = window.setTimeout(() => {
+      void prepareNextRound().catch((prepareError) => {
+        preparedForNextRef.current = null;
+        setError(messageFrom(prepareError));
+      });
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [prepareNextRound, room?.round]);
 
   const submitCapture = useCallback(async () => {
     if (!room?.round || !room.current_player_id || !capture || uploadState === "uploading") return;
-    const objectPath = `${room.id}/1/${room.current_player_id}.jpg`;
+    const objectPath = `${room.id}/${room.round.number}/${room.current_player_id}.jpg`;
     setUploadState("uploading");
     setUploadError(null);
     const { error: storageError } = await supabase.storage
@@ -182,6 +311,40 @@ export default function MultiplayerPoc() {
         setError(messageFrom(judgeError));
       }
     })();
+  }, [ensureAuthenticated, loadSnapshot, room]);
+
+  useEffect(() => {
+    const round = room?.round;
+    if (!room || !round || !["complete", "invalid"].includes(round.status) || !round.result_ends_at) return;
+    let active = true;
+    let timer: number | undefined;
+    const advance = async () => {
+      try {
+        const session = await ensureAuthenticated();
+        const response = await fetch(`/api/rounds/${round.id}/advance`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        if (!response.ok) {
+          const body = await response.json().catch(() => ({})) as { error?: string };
+          throw new Error(body.error ?? "다음 라운드로 진행하지 못했습니다.");
+        }
+        const body = await response.json() as { state: string };
+        if (!active) return;
+        if (body.state === "result_hold") {
+          timer = window.setTimeout(() => void advance(), 500);
+          return;
+        }
+        await loadSnapshot(room.code);
+      } catch (advanceError) {
+        if (!active) return;
+        setError(messageFrom(advanceError));
+        timer = window.setTimeout(() => void advance(), 2000);
+      }
+    };
+    const delay = Math.max(0, Date.parse(round.result_ends_at) - Date.now() + 100);
+    timer = window.setTimeout(() => void advance(), delay);
+    return () => { active = false; if (timer !== undefined) window.clearTimeout(timer); };
   }, [ensureAuthenticated, loadSnapshot, room]);
 
   async function run(action: () => Promise<void>) {
@@ -260,33 +423,22 @@ export default function MultiplayerPoc() {
   if (!ready) return <main className="shell"><div className="card"><p>연결 중…</p></div></main>;
   if (!authReady) return <main className="shell"><section className="card"><h1>연결할 수 없습니다</h1><p className="muted">Anonymous Sign-In과 환경변수를 확인해 주세요.</p>{error && <p className="error">{error}</p>}</section></main>;
 
-  if (room?.status === "round_1_complete" && room.round) {
-    const winners = room.round.scores.filter((score) => score.is_winner).map((score) => room.players.find((player) => player.id === score.player_id)?.nickname).filter(Boolean);
-    return <main className="shell"><section className="card result-card">
-      <span className="eyebrow">ROUND 1 COMPLETE</span><h1>라운드 결과</h1>
-      {room.round.status === "invalid" ? <p className="error">AI 판정에 실패해 이 라운드는 무효 처리됐습니다.</p> : <>
-        <div className="score-table">{room.round.scores.map((score) => {
-          const player = room.players.find((item) => item.id === score.player_id);
-          return <div className={`score-row ${score.is_winner ? "winner" : ""}`} key={score.player_id}>
-            <strong>{player?.nickname}</strong><span>표정 {score.expression}</span><span>포즈 {score.pose}</span><span>스타일 {score.style}</span><b>{Math.round(score.total / 30 * 100)}%</b>
-          </div>;
-        })}</div>
-        <p className="winner-copy">Round 1 Winner: {winners.join(" · ")}</p>
-      </>}
-      <p className="muted">이번 E2E 범위는 Round 1 결과에서 멈춥니다.</p>
-    </section></main>;
+  if (room?.status === "finished") return <FinalResultView results={room.final_results} players={room.players} />;
+
+  if (room?.status === "playing" && room.round && ["complete", "invalid"].includes(room.round.status)) {
+    return <RoundResultView key={room.round.id} round={room.round} players={room.players} videoRef={videoRef} cameraError={cameraError ?? error} />;
   }
 
   if (room?.status === "playing" && room.round) {
-    const alreadySubmitted = room.round.submitted_player_ids.includes(room.current_player_id);
+    const referenceVisible = ["observing", "countdown", "capturing", "complete"].includes(cameraPhase);
     const labels = {
-      idle: "카메라를 다시 준비해 주세요.", requesting: "카메라 권한 확인 중", preparing: "카메라 준비 중", ready: `라운드 시작 대기 · ${cameraSeconds || ""}`,
+      idle: "카메라를 준비하는 중", requesting: "카메라 권한 확인 중", preparing: "카메라 준비 중", ready: `라운드 시작 대기 · ${cameraSeconds || ""}`,
       observing: `짤 관찰 · ${cameraSeconds}`, countdown: `${cameraSeconds}`, capturing: "촬영 중", complete: "촬영 완료", error: "촬영 오류",
     };
     return <main className="game-shell"><section className="round-card">
-      <header><span className="eyebrow">ROUND 1 · 1/5</span><h1>{labels[cameraPhase]}</h1></header>
+      <header><span className="eyebrow">ROUND {room.round.number} · {room.round.number}/5</span><h1>{labels[cameraPhase]}</h1></header>
       <div className="round-grid">
-        <div><p className="panel-label">REFERENCE MEME</p><img className={`round-image ${cameraPhase === "ready" ? "reference-hidden" : ""}`} src={room.round.reference_image_path} alt="Round 1 따라하기 기준 짤" /></div>
+        <div><p className="panel-label">REFERENCE MEME</p><img className={`round-image ${referenceVisible ? "" : "reference-hidden"}`} src={room.round.reference_image_path} alt={`Round ${room.round.number} 따라하기 기준 짤`} /></div>
         <div><p className="panel-label">MY CAMERA</p><div className="camera-frame">
           <video ref={videoRef} autoPlay muted playsInline className={capture ? "hidden" : "camera-video"} />
           {capture && <img src={capture.url} alt="자동 촬영된 내 사진" className="camera-video" />}
@@ -294,10 +446,10 @@ export default function MultiplayerPoc() {
         </div></div>
       </div>
       {cameraError && <p className="error">{cameraError}</p>}
-      {(cameraPhase === "idle" || cameraPhase === "error") && !capture && <button className="primary" onClick={() => void retryCapture()}>촬영 오류 재시도</button>}
+      {(cameraPhase === "idle" || cameraPhase === "error") && !capture && !ownSubmitted && <button className="primary" onClick={() => void retryCapture()}>촬영 오류 재시도</button>}
       {uploadState === "uploading" && <p className="waiting-copy">사진 업로드 중…</p>}
       {uploadState === "error" && <><p className="error">{uploadError}</p><button className="primary" onClick={() => void submitCapture()}>같은 사진 다시 업로드</button></>}
-      {(uploadState === "submitted" || alreadySubmitted) && room.round.status === "scheduled" && <p className="waiting-copy">제출 완료 · 다른 플레이어를 기다리는 중… ({room.round.submitted_player_ids.length}/{room.players.length})</p>}
+      {(uploadState === "submitted" || ownSubmitted) && room.round.status === "scheduled" && <p className="waiting-copy">제출 완료 · 다른 플레이어를 기다리는 중… ({room.round.submitted_player_ids.length}/{room.players.length})</p>}
       {room.round.status === "judging" && <p className="waiting-copy">Gemini AI 판정 중…</p>}
       {error && <p className="error">{error}</p>}
     </section></main>;
@@ -306,14 +458,15 @@ export default function MultiplayerPoc() {
   if (room) {
     const allReady = room.players.length >= 2 && room.players.every((player) => player.camera_ready);
     const canStart = room.is_host && allReady && !busy;
+    const me = room.players.find((player) => player.id === room.current_player_id);
     return <main className="shell"><section className="card">
       <span className="eyebrow">WAITING ROOM</span><h1 className="room-code">{room.code}</h1>
       <button className="secondary" onClick={() => void shareRoom()}>초대 링크 공유</button><div className="divider" />
       <div className="player-heading"><h2>플레이어</h2><span>{room.players.length}/4</span></div>
       <ul className="players">{room.players.map((player) => <li key={player.id}><span className="avatar" style={{ background: seatColors[player.seat - 1] }}>{player.nickname.slice(0, 1).toUpperCase()}</span><span>{player.nickname}</span>{player.is_host && <span className="host-badge">HOST</span>}<span className="ready-badge">{player.camera_ready ? "READY" : "WAIT"}</span></li>)}</ul>
       <div className="camera-frame lobby-camera"><video ref={videoRef} autoPlay muted playsInline className="camera-video" /></div>
-      {!room.players.find((player) => player.id === room.current_player_id)?.camera_ready && <button className="primary" disabled={busy} onClick={prepareCamera}>{busy ? "카메라 준비 중…" : "카메라 준비"}</button>}
-      {room.players.find((player) => player.id === room.current_player_id)?.camera_ready && <p className="waiting-copy">내 카메라 준비 완료</p>}
+      {!me?.camera_ready && <button className="primary" disabled={busy} onClick={prepareCamera}>{busy ? "카메라 준비 중…" : "카메라 준비"}</button>}
+      {me?.camera_ready && <p className="waiting-copy">내 카메라 준비 완료</p>}
       {room.is_host ? <><button className="primary" disabled={!canStart} onClick={startGame}>게임 시작</button>{!allReady && <p className="hint">2명 이상 입장하고 모두 카메라를 준비해야 합니다.</p>}</> : <p className="waiting-copy">호스트가 게임을 시작하기를 기다리는 중…</p>}
       {cameraError && <p className="error">{cameraError}</p>}{error && <p className="error">{error}</p>}
     </section></main>;
@@ -321,5 +474,5 @@ export default function MultiplayerPoc() {
 
   if (pendingCode) return <main className="shell"><section className="card"><button className="back" onClick={() => setPendingCode(null)}>← 뒤로</button><span className="eyebrow">ROOM {pendingCode}</span><h1>닉네임 입력</h1><input className="text-input" value={nickname} maxLength={20} autoFocus placeholder="1–20자" onChange={(event) => setNickname(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") joinRoom(); }} /><button className="primary" disabled={busy || !nickname.trim()} onClick={joinRoom}>{busy ? "입장 중…" : "방 입장"}</button>{error && <p className="error">{error}</p>}</section></main>;
 
-  return <main className="shell"><section className="card hero"><span className="eyebrow">ROUND 1 E2E</span><h1>LikeMEME</h1><p className="muted">친구들과 같은 표정, 같은 순간.</p><button className="primary" disabled={busy} onClick={createRoom}>{busy ? "생성 중…" : "새 방 만들기"}</button><div className="or"><span>또는</span></div><label className="field-label" htmlFor="room-code">방 코드로 입장</label><div className="join-row"><input id="room-code" className="code-input" inputMode="numeric" maxLength={6} value={codeInput} placeholder="000000" onChange={(event) => setCodeInput(event.target.value.replace(/\D/g, "").slice(0, 6))} onKeyDown={(event) => { if (event.key === "Enter") chooseRoom(); }} /><button className="secondary compact" onClick={chooseRoom}>입장</button></div>{error && <p className="error">{error}</p>}</section></main>;
+  return <main className="shell"><section className="card hero"><span className="eyebrow">5 ROUND GAME</span><h1>LikeMEME</h1><p className="muted">친구들과 같은 표정, 같은 순간.</p><button className="primary" disabled={busy} onClick={createRoom}>{busy ? "생성 중…" : "새 방 만들기"}</button><div className="or"><span>또는</span></div><label className="field-label" htmlFor="room-code">방 코드로 입장</label><div className="join-row"><input id="room-code" className="code-input" inputMode="numeric" maxLength={6} value={codeInput} placeholder="000000" onChange={(event) => setCodeInput(event.target.value.replace(/\D/g, "").slice(0, 6))} onKeyDown={(event) => { if (event.key === "Enter") chooseRoom(); }} /><button className="secondary compact" onClick={chooseRoom}>입장</button></div>{error && <p className="error">{error}</p>}</section></main>;
 }

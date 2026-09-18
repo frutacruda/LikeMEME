@@ -77,6 +77,11 @@ h2 { font-size: 18px; margin: 0; }
 .score-row.winner { background: #fff2a8; outline: 2px solid #f0c929; }
 .score-row b { font-size: 18px; text-align: right; }
 .winner-copy { font-size: 20px; font-weight: 900; }
+.result-camera { width: 120px; margin: 12px auto 0; }
+.result-camera .camera-video { aspect-ratio: 3 / 4; }
+.final-table { display: grid; gap: 10px; margin: 24px 0; }
+.final-row { display: grid; grid-template-columns: 52px 1fr 56px 100px; gap: 10px; align-items: center; padding: 14px; border-radius: 14px; background: #f8f6f2; }
+.final-row:first-child { background: #fff2a8; outline: 2px solid #f0c929; }
 
 @media (max-width: 520px) {
   .shell { padding: 14px; align-items: center; }
@@ -86,4 +91,5 @@ h2 { font-size: 18px; margin: 0; }
   .round-grid { gap: 8px; }
   .round-card h1 { font-size: 24px; }
   .score-row { grid-template-columns: 1fr 1fr; }
+  .final-row { grid-template-columns: 44px 1fr; }
 }

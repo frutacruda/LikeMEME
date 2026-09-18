@@ -43,6 +43,18 @@ export function useCameraCapture() {
     if (videoElementRef.current) videoElementRef.current.srcObject = null;
   }, []);
 
+  const reset = useCallback(() => {
+    generation.current += 1;
+    stopTimer();
+    stopStream();
+    if (urlRef.current) URL.revokeObjectURL(urlRef.current);
+    urlRef.current = null;
+    setCapture(null);
+    setError(null);
+    setSeconds(0);
+    transition("idle");
+  }, [stopStream, stopTimer, transition]);
+
   const fail = useCallback((message: string) => {
     generation.current += 1;
     stopTimer();
@@ -220,5 +232,10 @@ export function useCameraCapture() {
     schedule(Date.now() - 8000);
   }, [prepare, schedule]);
 
-  return { videoRef, phase, seconds, error, capture, prepare, schedule, start, retryCapture };
+  const prepareNextRound = useCallback(async () => {
+    reset();
+    await prepare();
+  }, [prepare, reset]);
+
+  return { videoRef, phase, seconds, error, capture, prepare, schedule, start, retryCapture, reset, prepareNextRound };
 }
