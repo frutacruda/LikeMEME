@@ -55,9 +55,35 @@ h2 { font-size: 18px; margin: 0; }
 .error { color: #b42318; background: #fff0ee; border-radius: 10px; padding: 10px 12px; font-size: 13px; margin: 14px 0 0; }
 .game-card { text-align: center; }
 .game-icon { width: 76px; height: 76px; display: grid; place-items: center; margin: 26px auto; border-radius: 50%; background: #51cf66; color: white; font-size: 36px; font-weight: 900; }
+.ready-badge { margin-left: auto; color: #397346; font-size: 10px; letter-spacing: .08em; }
+.game-shell { min-height: 100svh; box-sizing: border-box; padding: 20px; background: #111214; color: white; }
+.round-card { width: min(100%, 980px); margin: 0 auto; }
+.round-card header { text-align: center; margin-bottom: 18px; }
+.round-card h1 { font-size: 30px; }
+.round-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.panel-label { color: #aaa; font-size: 11px; font-weight: 800; letter-spacing: .12em; }
+.round-image, .camera-video { display: block; width: 100%; aspect-ratio: 3 / 4; object-fit: contain; border-radius: 18px; background: #050505; }
+.reference-hidden { visibility: hidden; }
+.camera-video { transform: scaleX(-1); }
+.camera-frame { position: relative; overflow: hidden; border-radius: 18px; background: #050505; }
+.camera-frame .hidden { display: none; }
+.camera-frame img.camera-video { transform: none; }
+.lobby-camera { margin-top: 18px; }
+.lobby-camera .camera-video { max-height: 260px; }
+.countdown { position: absolute; inset: 0; display: grid; place-items: center; color: white; font-size: clamp(80px, 16vw, 180px); font-weight: 900; text-shadow: 0 4px 24px #000; }
+.result-card { width: min(100%, 680px); }
+.score-table { display: grid; gap: 10px; margin: 24px 0; }
+.score-row { display: grid; grid-template-columns: 1.4fr repeat(3, 1fr) .6fr; gap: 8px; align-items: center; padding: 14px; border-radius: 14px; background: #f8f6f2; font-size: 13px; }
+.score-row.winner { background: #fff2a8; outline: 2px solid #f0c929; }
+.score-row b { font-size: 18px; text-align: right; }
+.winner-copy { font-size: 20px; font-weight: 900; }
 
 @media (max-width: 520px) {
   .shell { padding: 14px; align-items: center; }
   .card { padding: 26px 22px; border-radius: 22px; }
   .room-code { font-size: 40px; }
+  .game-shell { padding: 12px; }
+  .round-grid { gap: 8px; }
+  .round-card h1 { font-size: 24px; }
+  .score-row { grid-template-columns: 1fr 1fr; }
 }

@@ -8,6 +8,7 @@ export default function CameraCapture() {
     idle: "카메라를 켜면 촬영이 자동으로 진행됩니다.",
     requesting: "카메라 권한을 허용해주세요.",
     preparing: "카메라 영상을 준비하고 있습니다.",
+    ready: "카메라 준비 완료",
     observing: `짤 관찰 시간 · ${seconds}초`,
     countdown: `${seconds}초 후 자동 촬영`,
     capturing: "사진을 생성하고 있습니다.",
