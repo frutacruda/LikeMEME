@@ -34,5 +34,6 @@ export async function scoreImages(
     }
   }
 
-  throw firstError instanceof Error ? firstError : new Error("Vision scoring failed twice.");
+  if (firstError !== undefined) throw firstError;
+  throw new Error("Vision scoring failed twice.");
 }
