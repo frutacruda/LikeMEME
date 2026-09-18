@@ -4,7 +4,7 @@ import { GoogleGenAI } from "@google/genai";
 import type { ParticipantImage, VisionImage, VisionScorer, VisionScore } from "./scoring";
 import { validateScores } from "./scoring";
 
-const MODEL = "gemini-3.6-flash";
+const MODEL = "gemini-3.5-flash-lite";
 const GEMINI_ATTEMPT_TIMEOUT_MS = 20_000;
 
 const SYSTEM_INSTRUCTION = `You are a strict image-similarity judge for a meme imitation game.
