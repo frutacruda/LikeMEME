@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -10,6 +11,27 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+const dosIyagiBoldface = localFont({
+  src: "./fonts/DOSIyagiBoldface.ttf",
+  variable: "--font-dos-iyagi",
+  weight: "400",
+  display: "swap",
+});
+
+const dosGothic = localFont({
+  src: "./fonts/DOSGothic.ttf",
+  variable: "--font-dos-gothic",
+  weight: "500",
+  display: "swap",
+});
+
+const notoSansKr = localFont({
+  src: "./fonts/NotoSansKR-Variable.ttf",
+  variable: "--font-noto-sans-kr",
+  weight: "100 900",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -32,7 +54,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="ko"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${dosIyagiBoldface.variable} ${dosGothic.variable} ${notoSansKr.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>

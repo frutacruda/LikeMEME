@@ -101,12 +101,199 @@ h2 { font-size: 18px; margin: 0; }
 .final-row { display: grid; grid-template-columns: 52px 1fr 56px 100px; gap: 10px; align-items: center; padding: 14px; border-radius: 14px; background: #f8f6f2; }
 .final-row:first-child { background: #fff2a8; outline: 2px solid #f0c929; }
 
+.waiting-room-screen {
+  position: relative;
+  min-height: 100svh;
+  overflow: hidden;
+  color: #fff;
+  background: #111a3d;
+  font-family: var(--font-dos-gothic), sans-serif;
+  font-weight: 500;
+}
+.waiting-room-screen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 72.2% 72.2% at 57.73% 45.88%, rgba(125,61,255,.42) 0, rgba(66,144,255,.28) 24%, rgba(8,227,255,.14) 48%, rgba(6,117,139,.07) 74%, transparent 100%);
+  pointer-events: none;
+}
+.waiting-room-header {
+  position: absolute;
+  z-index: 1;
+  top: 62px;
+  left: 88px;
+  display: flex;
+  align-items: flex-start;
+  gap: 30px;
+}
+.waiting-room-logo {
+  display: block;
+  width: 152px;
+  height: 76px;
+  object-fit: contain;
+}
+.waiting-room-code {
+  min-width: 170px;
+  border: 0;
+  margin-top: 8px;
+  padding: 10px;
+  color: #fff;
+  background: rgba(0,0,0,.4);
+  font: 400 36px/normal var(--font-dos-iyagi), sans-serif;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.waiting-room-code:focus-visible { outline: 2px solid #00e5ff; outline-offset: 3px; }
+.waiting-room-camera {
+  position: absolute;
+  z-index: 1;
+  top: 244px;
+  left: 88px;
+  width: 698px;
+  height: 412px;
+  border-radius: 10px;
+}
+.waiting-room-camera .camera-video {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: auto;
+  border-radius: 0;
+  object-fit: cover;
+}
+.waiting-room-camera-action {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  bottom: 24px;
+  min-width: 180px;
+  border: 2px solid #00e5ff;
+  border-radius: 999px;
+  padding: 11px 20px;
+  transform: translateX(-50%);
+  color: #fff;
+  background: rgba(17,26,61,.88);
+  font-weight: 700;
+}
+.waiting-room-players {
+  position: absolute;
+  z-index: 1;
+  top: 244px;
+  left: 830px;
+  width: 474px;
+}
+.waiting-room-player-heading {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  height: 22px;
+  margin-bottom: 24px;
+  font-size: 18px;
+  line-height: 1;
+}
+.waiting-room-player-heading h1,
+.waiting-room-player-heading span {
+  margin: 0;
+  font: 400 18px/normal var(--font-dos-iyagi), sans-serif;
+  letter-spacing: 0;
+}
+.waiting-room-player-list {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  flex-direction: column;
+  gap: 12px;
+  list-style: none;
+}
+.waiting-room-player-list li {
+  display: flex;
+  box-sizing: border-box;
+  width: 100%;
+  height: 56px;
+  align-items: center;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: rgba(17,26,61,.7);
+}
+.waiting-room-avatar {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  place-items: center;
+  border-radius: 50%;
+  color: #111a3d;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: normal;
+}
+.waiting-room-nickname {
+  margin-left: 12px;
+  overflow: hidden;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: normal;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.waiting-room-host {
+  margin-left: 8px;
+  color: rgba(255,255,255,.58);
+  font-size: 10px;
+  letter-spacing: .08em;
+}
+.waiting-room-ready {
+  margin-left: auto;
+  padding-left: 12px;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: normal;
+  white-space: nowrap;
+}
+.waiting-room-ready.is-ready { color: #00e5ff; }
+.waiting-room-ready.is-waiting { color: #ff2fb3; }
+.waiting-room-start {
+  position: absolute;
+  z-index: 2;
+  top: 571px;
+  left: 857px;
+  width: 420px;
+  text-align: center;
+}
+.waiting-room-start .onboarding-room-action { display: block; }
+.waiting-room-start-hint {
+  margin: 8px -28px 0;
+  color: rgba(255,255,255,.72);
+  font-size: 12px;
+  line-height: 1.4;
+}
+.waiting-room-start .onboarding-room-action span { font-family: var(--font-dos-iyagi), sans-serif; }
+.waiting-room-host-wait {
+  box-sizing: border-box;
+  width: 420px;
+  min-height: 54px;
+  margin: 0;
+  padding: 17px 20px;
+  color: rgba(255,255,255,.78);
+  background: rgba(17,26,61,.7);
+  font-size: 14px;
+}
+.waiting-room-errors {
+  position: absolute;
+  z-index: 3;
+  top: 674px;
+  left: 88px;
+  width: 698px;
+}
+.waiting-room-errors .error { margin-top: 8px; }
+
 .onboarding {
   position: relative;
   min-height: 100svh;
   overflow: hidden;
   color: #fff;
-  font-family: var(--font-geist-mono), "Courier New", monospace;
+  font-family: var(--font-dos-gothic), sans-serif;
+  font-weight: 500;
 }
 .onboarding-initial { background: #111a3d; }
 .onboarding-initial::before {
@@ -153,7 +340,8 @@ h2 { font-size: 18px; margin: 0; }
   transform: translateX(-50%);
   color: #fff;
   text-align: center;
-  font-weight: 700;
+  font-family: var(--font-dos-iyagi), sans-serif;
+  font-weight: 400;
   letter-spacing: -.5px;
   text-shadow: 0 0 14px rgba(0,229,255,.18);
 }
@@ -172,7 +360,7 @@ h2 { font-size: 18px; margin: 0; }
   border-radius: 999px;
   color: #fff;
   background: rgba(255,255,255,.2);
-  font: 700 18px/1 Arial, sans-serif;
+  font: 700 18px/normal var(--font-noto-sans-kr), sans-serif;
 }
 .onboarding-help-cyan { border-color: #00e5ff; }
 .onboarding-menu { background: #111a3d; }
@@ -192,7 +380,7 @@ h2 { font-size: 18px; margin: 0; }
 }
 .onboarding-rules h1 {
   margin: 0 0 24px;
-  font: 500 28px/1 var(--font-geist-mono), "Courier New", monospace;
+  font: 400 28px/normal var(--font-dos-iyagi), sans-serif;
   text-align: center;
   letter-spacing: 0;
 }
@@ -265,7 +453,7 @@ h2 { font-size: 18px; margin: 0; }
 }
 .onboarding-room-card label {
   color: #fff;
-  font: 500 18px/1.2 var(--font-geist-mono), "Courier New", monospace;
+  font: 500 18px/normal var(--font-dos-gothic), sans-serif;
 }
 .onboarding-room-input {
   box-sizing: border-box;
@@ -277,7 +465,7 @@ h2 { font-size: 18px; margin: 0; }
   padding: 0 20px;
   color: #fff;
   background: rgba(0,0,0,.4);
-  font: 600 18px/1 var(--font-geist-mono), "Courier New", monospace;
+  font: 500 18px/normal var(--font-dos-gothic), sans-serif;
 }
 .onboarding-room-input:focus { box-shadow: 0 0 0 2px #00e5ff; }
 .onboarding-room-code-input {
@@ -322,7 +510,7 @@ h2 { font-size: 18px; margin: 0; }
   height: 43px;
   align-items: center;
   justify-content: center;
-  font: 700 24px/1 var(--font-geist-mono), "Courier New", monospace;
+  font: 400 24px/normal var(--font-dos-iyagi), sans-serif;
   letter-spacing: -.48px;
 }
 .onboarding-room-action-primary span { background: #7c3dff; }
@@ -345,12 +533,12 @@ h2 { font-size: 18px; margin: 0; }
   text-align: center;
   filter: drop-shadow(0 20px 25px rgba(23,13,31,.22));
 }
-.onboarding-create-progress span { color: #33ffd6; font-size: 42px; font-weight: 900; }
+.onboarding-create-progress span { color: #33ffd6; font-family: var(--font-noto-sans-kr), sans-serif; font-size: 42px; font-weight: 900; }
 .onboarding-create-progress p {
   width: 252px;
   margin: 0;
   color: #fff;
-  font: 700 24px/1.2 var(--font-geist-mono), "Courier New", monospace;
+  font: 400 24px/normal var(--font-dos-iyagi), sans-serif;
 }
 
 @media (max-width: 520px) {
@@ -365,6 +553,31 @@ h2 { font-size: 18px; margin: 0; }
 }
 
 @media (max-width: 900px), (max-height: 720px) {
+  .waiting-room-screen {
+    box-sizing: border-box;
+    min-width: 320px;
+    overflow: auto;
+    padding: 28px 20px 92px;
+  }
+  .waiting-room-header,
+  .waiting-room-camera,
+  .waiting-room-players,
+  .waiting-room-start,
+  .waiting-room-errors {
+    position: relative;
+    inset: auto;
+    width: min(100%, 698px);
+    margin-right: auto;
+    margin-left: auto;
+  }
+  .waiting-room-header { align-items: center; }
+  .waiting-room-logo { width: 120px; height: 60px; }
+  .waiting-room-code { margin-top: 0; font-size: clamp(24px, 6vw, 32px); }
+  .waiting-room-camera { height: auto; margin-top: 56px; aspect-ratio: 698 / 412; }
+  .waiting-room-players { margin-top: 32px; }
+  .waiting-room-start { margin-top: 32px; }
+  .waiting-room-start .onboarding-room-action { margin-right: auto; margin-left: auto; }
+  .waiting-room-errors { margin-top: 18px; }
   .onboarding { min-width: 320px; }
   .onboarding-logo-large { width: min(72vw, 620px); }
   .onboarding-tagline { font-size: clamp(18px, 3.2vw, 28px); }
@@ -382,6 +595,22 @@ h2 { font-size: 18px; margin: 0; }
 }
 
 @media (max-width: 470px) {
+  .waiting-room-screen { padding-right: 16px; padding-left: 16px; }
+  .waiting-room-header { gap: 14px; }
+  .waiting-room-logo { width: 96px; height: 48px; }
+  .waiting-room-code { min-width: 0; padding: 8px; font-size: 22px; }
+  .waiting-room-player-heading h1,
+  .waiting-room-player-heading span,
+  .waiting-room-nickname,
+  .waiting-room-ready { font-size: 15px; }
+  .waiting-room-host { display: none; }
+  .waiting-room-start { width: 100%; transform: none; }
+  .waiting-room-start .onboarding-room-action {
+    transform: scale(.8);
+    transform-origin: top center;
+  }
+  .waiting-room-start-hint { margin-top: -2px; }
+  .waiting-room-host-wait { width: 100%; }
   .onboarding-room-actions,
   .onboarding-actions {
     bottom: 48px;

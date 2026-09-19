@@ -561,17 +561,68 @@ export default function MultiplayerPoc() {
     const allReady = room.players.length >= 2 && room.players.every((player) => player.camera_ready);
     const canStart = room.is_host && allReady && !busy;
     const me = room.players.find((player) => player.id === room.current_player_id);
-    return <main className="shell"><section className="card">
-      <span className="eyebrow">WAITING ROOM</span><h1 className="room-code">{room.code}</h1>
-      <button className="secondary" onClick={() => void shareRoom()}>초대 링크 공유</button><div className="divider" />
-      <div className="player-heading"><h2>플레이어</h2><span>{room.players.length}/4</span></div>
-      <ul className="players">{room.players.map((player) => <li key={player.id}><span className="avatar" style={{ background: seatColors[player.seat - 1] }}>{player.nickname.slice(0, 1).toUpperCase()}</span><span>{player.nickname}</span>{player.is_host && <span className="host-badge">HOST</span>}<span className="ready-badge">{player.camera_ready ? "READY" : "WAIT"}</span></li>)}</ul>
-      <div className="camera-frame lobby-camera"><video ref={videoRef} autoPlay muted playsInline className="camera-video" /></div>
-      {!me?.camera_ready && <button className="primary" disabled={busy} onClick={prepareCamera}>{busy ? "카메라 준비 중…" : "카메라 준비"}</button>}
-      {me?.camera_ready && <p className="waiting-copy">내 카메라 준비 완료</p>}
-      {room.is_host ? <><button className="primary" disabled={!canStart} onClick={startGame}>게임 시작</button>{!allReady && <p className="hint">2명 이상 입장하고 모두 카메라를 준비해야 합니다.</p>}</> : <p className="waiting-copy">호스트가 게임을 시작하기를 기다리는 중…</p>}
-      {cameraError && <p className="error">{cameraError}</p>}{error && <p className="error">{error}</p>}
-    </section></main>;
+    const playerSlots = Array.from({ length: 4 }, (_, index) =>
+      room.players.find((player) => player.seat === index + 1),
+    );
+    const displayRoomCode = room.code.replace(/^(\d{3})(\d{3})$/, "$1 $2");
+
+    return <main className="waiting-room-screen">
+      <header className="waiting-room-header">
+        <img className="waiting-room-logo" src="/brand/likememe-logo.png" alt="LikeMEME" />
+        <button className="waiting-room-code" type="button" onClick={() => void shareRoom()} aria-label={`초대 코드 ${room.code}. 초대 링크 공유`}>
+          {displayRoomCode}
+        </button>
+      </header>
+
+      <div className="waiting-room-camera camera-frame">
+        <video ref={videoRef} autoPlay muted playsInline className="camera-video" />
+        {!me?.camera_ready && (
+          <button className="waiting-room-camera-action" type="button" disabled={busy} onClick={prepareCamera}>
+            {busy ? "카메라 준비 중…" : "카메라 준비"}
+          </button>
+        )}
+      </div>
+
+      <section className="waiting-room-players" aria-labelledby="waiting-room-player-title">
+        <div className="waiting-room-player-heading">
+          <h1 id="waiting-room-player-title">플레이어</h1>
+          <span>{room.players.length} / 4</span>
+        </div>
+        <ul className="waiting-room-player-list">
+          {playerSlots.map((player, index) => (
+            <li className={player ? "is-filled" : "is-empty"} key={player?.id ?? `empty-${index + 1}`}>
+              {player && <>
+                <span className="waiting-room-avatar" style={{ background: seatColors[player.seat - 1] }}>
+                  {player.nickname.slice(0, 1).toUpperCase()}
+                </span>
+                <span className="waiting-room-nickname">{player.nickname}</span>
+                {player.is_host && <span className="waiting-room-host">HOST</span>}
+                <span className={`waiting-room-ready ${player.camera_ready ? "is-ready" : "is-waiting"}`}>
+                  {player.camera_ready ? "준비 완료" : "준비중"}
+                </span>
+              </>}
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <div className="waiting-room-start">
+        {room.is_host ? (
+          <OnboardingAction variant="primary" disabled={!canStart} onClick={startGame}>
+            {busy ? "시작 중…" : "게임 시작하기"}
+          </OnboardingAction>
+        ) : (
+          <p className="waiting-room-host-wait">호스트가 게임을 시작하기를 기다리는 중…</p>
+        )}
+        {room.is_host && !allReady && <p className="waiting-room-start-hint">2명 이상 입장하고 모두 카메라를 준비해야 합니다.</p>}
+      </div>
+
+      {(cameraError || error) && <div className="waiting-room-errors">
+        {cameraError && <p className="error">{cameraError}</p>}
+        {error && <p className="error">{error}</p>}
+      </div>}
+      <button className="onboarding-help onboarding-help-cyan" type="button" aria-label="도움말">?</button>
+    </main>;
   }
 
   if (pendingCode) return <main className="onboarding onboarding-room-screen">
