@@ -162,8 +162,8 @@ h2 { font-size: 18px; margin: 0; }
 .onboarding-help {
   position: absolute;
   z-index: 2;
+  top: 815px;
   left: 48px;
-  bottom: 37px;
   display: grid;
   width: 40px;
   height: 40px;
@@ -175,68 +175,48 @@ h2 { font-size: 18px; margin: 0; }
   font: 700 18px/1 Arial, sans-serif;
 }
 .onboarding-help-cyan { border-color: #00e5ff; }
-.onboarding-help-pink { border-color: #ff14ab; }
-.onboarding-menu {
-  background: linear-gradient(130.746deg, #290863 8.333%, #6314bf 48.333%, #c20d85 91.667%);
-}
-.onboarding-logo-small {
-  position: absolute;
-  top: 11.67%;
-  left: 50%;
-  width: 296px;
-  height: 148px;
-  transform: translateX(-50%);
-}
+.onboarding-menu { background: #111a3d; }
 .onboarding-rules {
   position: absolute;
-  top: 32.67%;
+  top: calc(50% + .5px);
   left: 50%;
   box-sizing: border-box;
   width: 720px;
-  height: 270px;
-  transform: translateX(-50%);
+  height: 251px;
+  transform: translate(-50%, -50%);
   padding: 40px 44px;
-  border: 2px solid rgba(255,20,171,.9);
+  overflow: hidden;
+  border: 0;
   border-radius: 28px;
-  background: rgba(26,5,56,.8);
-  box-shadow: 0 20px 50px -8px rgba(23,13,31,.22);
+  background: rgba(0,0,0,.4);
 }
 .onboarding-rules h1 {
   margin: 0 0 24px;
-  font: 600 30px/1 var(--font-geist-mono), "Courier New", monospace;
+  font: 500 28px/1 var(--font-geist-mono), "Courier New", monospace;
   text-align: center;
   letter-spacing: 0;
 }
 .onboarding-rule-list {
   box-sizing: border-box;
-  height: 130px;
+  width: 632px;
   padding: 18px 20px;
   border-radius: 18px;
   background: rgba(0,0,0,.4);
 }
-.onboarding-rule-list p { margin: 0 0 8px; font-size: 24px; line-height: 26px; }
+.onboarding-rule-list p { margin: 0 0 12px; font-size: 18px; line-height: 18px; }
 .onboarding-rule-list p:last-child { margin-bottom: 0; }
 .onboarding-actions {
   position: absolute;
   z-index: 3;
-  top: 67.22%;
+  top: 623px;
   left: 50%;
-  display: grid;
+  display: flex;
   width: 422px;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 24px;
   transform: translateX(-50%);
 }
-.onboarding-action {
-  width: 100%;
-  height: 56px;
-  border: 0;
-  border-radius: 16px;
-  color: #fff;
-  font: 700 24px/1 var(--font-geist-mono), "Courier New", monospace;
-}
-.onboarding-action-primary { background: #ff0a94; }
-.onboarding-action-secondary { background: #2e0861; }
-.onboarding-action:hover:not(:disabled), .onboarding-action:focus-visible { filter: brightness(1.12); }
 .onboarding-code-entry {
   padding: 14px;
   border: 1px solid rgba(255,20,171,.72);
@@ -254,7 +234,7 @@ h2 { font-size: 18px; margin: 0; }
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse 72% 70% at 58% 46%, rgba(125,61,255,.42) 0, rgba(66,144,255,.28) 24%, rgba(8,227,255,.14) 48%, rgba(6,117,139,.07) 74%, transparent 100%);
+  background: radial-gradient(ellipse 72.2% 72.2% at 57.73% 45.88%, rgba(125,61,255,.42) 0, rgba(66,144,255,.28) 24%, rgba(8,227,255,.14) 48%, rgba(6,117,139,.07) 74%, transparent 100%);
 }
 .onboarding-room-logo {
   position: absolute;
@@ -389,12 +369,11 @@ h2 { font-size: 18px; margin: 0; }
   .onboarding-logo-large { width: min(72vw, 620px); }
   .onboarding-tagline { font-size: clamp(18px, 3.2vw, 28px); }
   .onboarding-start-copy { font-size: clamp(17px, 2.8vw, 24px); }
-  .onboarding-logo-small { top: 6%; width: 230px; height: 115px; }
-  .onboarding-rules { top: 23%; width: min(calc(100% - 40px), 720px); height: auto; padding: 28px; }
-  .onboarding-rule-list { height: auto; }
-  .onboarding-rule-list p { font-size: clamp(16px, 2.8vw, 22px); }
-  .onboarding-actions { top: auto; bottom: 64px; width: min(calc(100% - 48px), 422px); }
-  .onboarding-help { left: 20px; bottom: 16px; }
+  .onboarding-rules { top: 42%; width: min(calc(100% - 40px), 720px); height: auto; padding: 28px 24px; }
+  .onboarding-rule-list { width: 100%; }
+  .onboarding-rule-list p { font-size: clamp(15px, 2.8vw, 18px); }
+  .onboarding-actions { top: auto; bottom: 54px; }
+  .onboarding-help { top: auto; left: 20px; bottom: 16px; }
   .onboarding-room-logo { top: 5%; width: 280px; height: 140px; }
   .onboarding-room-card { top: 42%; width: min(calc(100% - 40px), 720px); padding: 28px 24px; }
   .onboarding-room-input { width: 100%; }
@@ -403,7 +382,8 @@ h2 { font-size: 18px; margin: 0; }
 }
 
 @media (max-width: 470px) {
-  .onboarding-room-actions {
+  .onboarding-room-actions,
+  .onboarding-actions {
     bottom: 48px;
     transform: translateX(-50%) scale(.8);
     transform-origin: bottom center;

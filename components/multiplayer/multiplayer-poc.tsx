@@ -627,8 +627,8 @@ export default function MultiplayerPoc() {
     <button className="onboarding-help onboarding-help-cyan" type="button" aria-label="도움말">?</button>
   </main>;
 
-  return <main className="onboarding onboarding-menu">
-    <img className="onboarding-logo onboarding-logo-small" src="/brand/likememe-logo.png" alt="LikeMEME" />
+  return <main className="onboarding onboarding-room-screen onboarding-menu">
+    <img className="onboarding-logo onboarding-room-logo" src="/brand/likememe-logo.png" alt="LikeMEME" />
     <section className="onboarding-rules" aria-labelledby="how-to-play-title">
       <h1 id="how-to-play-title">How to Play</h1>
       <div className="onboarding-rule-list">
@@ -638,10 +638,10 @@ export default function MultiplayerPoc() {
       </div>
     </section>
     <div className="onboarding-actions">
-      <button className="onboarding-action onboarding-action-primary" type="button" disabled={busy} onClick={createRoom}>{busy ? "생성 중…" : "새 방 만들기"}</button>
-      <button className="onboarding-action onboarding-action-secondary" type="button" onClick={() => setShowCodeEntry(true)}>코드로 입장하기</button>
+      <OnboardingAction variant="primary" disabled={busy} onClick={createRoom}>{busy ? "생성 중…" : "새 방 만들기"}</OnboardingAction>
+      <OnboardingAction variant="secondary" onClick={() => setShowCodeEntry(true)}>코드로 입장하기</OnboardingAction>
       {error && <p className="onboarding-error">{error}</p>}
     </div>
-    <button className="onboarding-help onboarding-help-pink" type="button" aria-label="도움말">?</button>
+    <button className="onboarding-help onboarding-help-cyan" type="button" aria-label="도움말">?</button>
   </main>;
 }
