@@ -15,6 +15,17 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "LikeMEME",
   description: "AI가 판정하는 실시간 밈 싱크로율 배틀",
+  openGraph: {
+    title: "LikeMEME",
+    description: "AI가 판정하는 실시간 밈 싱크로율 배틀",
+    siteName: "LikeMEME",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "LikeMEME",
+    description: "AI가 판정하는 실시간 밈 싱크로율 배틀",
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
