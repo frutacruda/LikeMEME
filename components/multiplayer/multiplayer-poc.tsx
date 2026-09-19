@@ -139,6 +139,7 @@ export default function MultiplayerPoc() {
   const [onboardingStarted, setOnboardingStarted] = useState(false);
   const [showCodeEntry, setShowCodeEntry] = useState(false);
   const roomCodeRef = useRef<string | null>(null);
+  const snapshotRequestSequenceRef = useRef(0);
   const activeRoundIdRef = useRef<string | null>(null);
   const scheduledRoundRef = useRef<string | null>(null);
   const judgingRequestRef = useRef<string | null>(null);
@@ -160,7 +161,9 @@ export default function MultiplayerPoc() {
   }, [supabase]);
 
   const loadSnapshot = useCallback(async (roomCode: string) => {
+    const requestSequence = ++snapshotRequestSequenceRef.current;
     const { data, error: rpcError } = await supabase.rpc("get_room_snapshot", { room_code: roomCode });
+    if (requestSequence !== snapshotRequestSequenceRef.current) return;
     if (rpcError) throw rpcError;
     const snapshot = data as RoomSnapshot;
     if (snapshot.round?.id !== activeRoundIdRef.current) {
@@ -281,7 +284,7 @@ export default function MultiplayerPoc() {
       return;
     }
     setUploadState("submitted");
-    await loadSnapshot(room.code);
+    await loadSnapshot(room.code).catch((refreshError) => setError(messageFrom(refreshError)));
   }, [capture, loadSnapshot, room, supabase, uploadState]);
 
   useEffect(() => {
