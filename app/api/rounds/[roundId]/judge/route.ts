@@ -87,7 +87,7 @@ function bearerToken(request: Request) {
 }
 
 async function loadReference(referencePath: string): Promise<VisionImage> {
-  if (!/^\/reference-memes\/[a-z0-9-]+\.jpg$/.test(referencePath)) {
+  if (!/^\/reference-memes\/[a-z0-9-]+\.(?:jpg|png)$/.test(referencePath)) {
     throw new Error("Round reference image path is invalid.");
   }
   const publicRoot = path.resolve(process.cwd(), "public");
@@ -95,7 +95,10 @@ async function loadReference(referencePath: string): Promise<VisionImage> {
   if (!absolutePath.startsWith(`${publicRoot}${path.sep}`)) {
     throw new Error("Round reference image path is invalid.");
   }
-  return { bytes: new Uint8Array(await readFile(absolutePath)), mimeType: "image/jpeg" };
+  return {
+    bytes: new Uint8Array(await readFile(absolutePath)),
+    mimeType: referencePath.endsWith(".png") ? "image/png" : "image/jpeg",
+  };
 }
 
 export async function POST(request: Request, { params }: RouteContext) {
