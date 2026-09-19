@@ -136,6 +136,8 @@ export default function MultiplayerPoc() {
   const [error, setError] = useState<string | null>(null);
   const [uploadState, setUploadState] = useState<"idle" | "uploading" | "submitted" | "error">("idle");
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [onboardingStarted, setOnboardingStarted] = useState(false);
+  const [showCodeEntry, setShowCodeEntry] = useState(false);
   const roomCodeRef = useRef<string | null>(null);
   const activeRoundIdRef = useRef<string | null>(null);
   const scheduledRoundRef = useRef<string | null>(null);
@@ -505,5 +507,38 @@ export default function MultiplayerPoc() {
 
   if (pendingCode) return <main className="shell"><section className="card"><button className="back" onClick={() => setPendingCode(null)}>← 뒤로</button><span className="eyebrow">ROOM {pendingCode}</span><h1>닉네임 입력</h1><input className="text-input" value={nickname} maxLength={20} autoFocus placeholder="1–20자" onChange={(event) => setNickname(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") joinRoom(); }} /><button className="primary" disabled={busy || !nickname.trim()} onClick={joinRoom}>{busy ? "입장 중…" : "방 입장"}</button>{error && <p className="error">{error}</p>}</section></main>;
 
-  return <main className="shell"><section className="card hero"><span className="eyebrow">5 ROUND GAME</span><h1>LikeMEME</h1><p className="muted">친구들과 같은 표정, 같은 순간.</p><button className="primary" disabled={busy} onClick={createRoom}>{busy ? "생성 중…" : "새 방 만들기"}</button><div className="or"><span>또는</span></div><label className="field-label" htmlFor="room-code">방 코드로 입장</label><div className="join-row"><input id="room-code" className="code-input" inputMode="numeric" maxLength={6} value={codeInput} placeholder="000000" onChange={(event) => setCodeInput(event.target.value.replace(/\D/g, "").slice(0, 6))} onKeyDown={(event) => { if (event.key === "Enter") chooseRoom(); }} /><button className="secondary compact" onClick={chooseRoom}>입장</button></div>{error && <p className="error">{error}</p>}</section></main>;
+  if (!onboardingStarted) return <main className="onboarding onboarding-initial">
+    <img className="onboarding-bokeh" src="/brand/onboarding-bokeh.svg" alt="" />
+    <button className="onboarding-start-surface" type="button" onClick={() => setOnboardingStarted(true)}>
+      <img className="onboarding-logo onboarding-logo-large" src="/brand/likememe-logo.png" alt="LikeMEME" />
+      <span className="onboarding-tagline">AI가 판정하는 실시간 밈 싱크로율 배틀</span>
+      <span className="onboarding-start-copy">시작하려면 클릭하세요.</span>
+    </button>
+    <button className="onboarding-help onboarding-help-cyan" type="button" aria-label="도움말">?</button>
+  </main>;
+
+  return <main className="onboarding onboarding-menu">
+    <img className="onboarding-logo onboarding-logo-small" src="/brand/likememe-logo.png" alt="LikeMEME" />
+    <section className="onboarding-rules" aria-labelledby="how-to-play-title">
+      <h1 id="how-to-play-title">How to Play</h1>
+      <div className="onboarding-rule-list">
+        <p>총 5라운드. 플레이 인원 2명~4명.</p>
+        <p>카메라를 허용해주세요.</p>
+        <p>짤을 가장 잘 따라한 사람이 승리!</p>
+      </div>
+    </section>
+    <div className="onboarding-actions">
+      <button className="onboarding-action onboarding-action-primary" type="button" disabled={busy} onClick={createRoom}>{busy ? "생성 중…" : "새 방 만들기"}</button>
+      <button className="onboarding-action onboarding-action-secondary" type="button" onClick={() => setShowCodeEntry((visible) => !visible)}>코드로 입장하기</button>
+      {showCodeEntry && <div className="onboarding-code-entry">
+        <label htmlFor="room-code">6자리 방 코드</label>
+        <div className="join-row">
+          <input id="room-code" className="code-input" inputMode="numeric" maxLength={6} value={codeInput} placeholder="000000" autoFocus onChange={(event) => setCodeInput(event.target.value.replace(/\D/g, "").slice(0, 6))} onKeyDown={(event) => { if (event.key === "Enter") chooseRoom(); }} />
+          <button className="onboarding-code-submit" type="button" onClick={chooseRoom}>입장</button>
+        </div>
+      </div>}
+      {error && <p className="onboarding-error">{error}</p>}
+    </div>
+    <button className="onboarding-help onboarding-help-pink" type="button" aria-label="도움말">?</button>
+  </main>;
 }
