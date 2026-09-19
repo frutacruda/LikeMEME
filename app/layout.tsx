@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "FollowMe",
-  description: "친구들과 함께하는 실시간 밈 따라하기 게임",
+  title: "LikeMEME",
+  description: "AI가 판정하는 실시간 밈 싱크로율 배틀",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

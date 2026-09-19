@@ -23,6 +23,24 @@ button, input { font: inherit; }
 button { cursor: pointer; }
 button:disabled { cursor: not-allowed; opacity: .48; }
 
+.bgm-toggle {
+  position: fixed;
+  z-index: 100;
+  top: 16px;
+  right: 16px;
+  border: 1px solid rgba(255,255,255,.42);
+  border-radius: 999px;
+  padding: 8px 12px;
+  color: #fff;
+  background: rgba(17,18,20,.72);
+  box-shadow: 0 4px 18px rgba(0,0,0,.2);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  backdrop-filter: blur(8px);
+}
+.bgm-toggle:focus-visible { outline: 2px solid #00e5ff; outline-offset: 2px; }
+
 .shell { min-height: 100svh; display: grid; place-items: center; padding: 24px; background: radial-gradient(circle at top, #fff 0, #f7f4ef 55%); }
 .card { width: min(100%, 440px); box-sizing: border-box; background: rgba(255,255,255,.94); border: 1px solid #e8e3da; border-radius: 28px; padding: 34px; box-shadow: 0 24px 70px rgba(41,35,27,.1); }
 .hero { text-align: center; }
