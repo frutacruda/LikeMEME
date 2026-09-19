@@ -2,7 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type ButtonHTMLAttributes, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCameraCapture } from "@/components/camera/use-camera-capture";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { FinalResult, RoomPlayer, RoomSnapshot, RoundSnapshot } from "@/lib/supabase/types";
@@ -19,6 +19,26 @@ function isDuplicateUpload(error: unknown) {
   if (!error || typeof error !== "object") return false;
   const value = error as { statusCode?: string | number; message?: string };
   return String(value.statusCode) === "409" || /duplicate|already exists/i.test(value.message ?? "");
+}
+
+function OnboardingAction({
+  children,
+  variant,
+  ...props
+}: ButtonHTMLAttributes<HTMLButtonElement> & {
+  variant: "primary" | "secondary";
+}) {
+  return (
+    <button className={`onboarding-room-action onboarding-room-action-${variant}`} type="button" {...props}>
+      <img
+        src={`/brand/onboarding-button-${variant}.svg`}
+        alt=""
+        width={420}
+        height={54}
+      />
+      <span>{children}</span>
+    </button>
+  );
 }
 
 function RoundResultView({
@@ -148,7 +168,9 @@ export default function MultiplayerPoc() {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [onboardingStarted, setOnboardingStarted] = useState(false);
   const [showCodeEntry, setShowCodeEntry] = useState(false);
+  const [showCreateProgress, setShowCreateProgress] = useState(false);
   const roomCodeRef = useRef<string | null>(null);
+  const createRequestSequenceRef = useRef(0);
   const snapshotRequestSequenceRef = useRef(0);
   const activeRoundIdRef = useRef<string | null>(null);
   const scheduledRoundRef = useRef<string | null>(null);
@@ -402,12 +424,17 @@ export default function MultiplayerPoc() {
   }
 
   function createRoom() {
+    const requestSequence = ++createRequestSequenceRef.current;
+    setShowCreateProgress(true);
     void run(async () => {
       const { data, error: rpcError } = await supabase.rpc("create_room");
       if (rpcError) throw rpcError;
+      if (requestSequence !== createRequestSequenceRef.current) return;
       const roomCode = String(data);
       setPendingCode(roomCode);
       window.history.replaceState(null, "", `?room=${roomCode}`);
+    }).finally(() => {
+      if (requestSequence === createRequestSequenceRef.current) setShowCreateProgress(false);
     });
   }
 
@@ -489,6 +516,7 @@ export default function MultiplayerPoc() {
     setUploadState("idle");
     setUploadError(null);
     setShowCodeEntry(false);
+    setShowCreateProgress(false);
     setOnboardingStarted(false);
   }
 
@@ -546,7 +574,19 @@ export default function MultiplayerPoc() {
     </section></main>;
   }
 
-  if (pendingCode) return <main className="shell"><section className="card"><button className="back" onClick={() => setPendingCode(null)}>← 뒤로</button><span className="eyebrow">ROOM {pendingCode}</span><h1>닉네임 입력</h1><input className="text-input" value={nickname} maxLength={20} autoFocus placeholder="1–20자" onChange={(event) => setNickname(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") joinRoom(); }} /><button className="primary" disabled={busy || !nickname.trim()} onClick={joinRoom}>{busy ? "입장 중…" : "방 입장"}</button>{error && <p className="error">{error}</p>}</section></main>;
+  if (pendingCode) return <main className="onboarding onboarding-room-screen">
+    <img className="onboarding-logo onboarding-room-logo" src="/brand/likememe-logo.png" alt="LikeMEME" />
+    <section className="onboarding-room-card" aria-labelledby="nickname-prompt">
+      <label id="nickname-prompt" htmlFor="nickname">닉네임을 입력해주세요.</label>
+      <input id="nickname" className="onboarding-room-input" value={nickname} maxLength={20} autoFocus onChange={(event) => setNickname(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") joinRoom(); }} />
+    </section>
+    <div className="onboarding-room-actions">
+      <OnboardingAction variant="primary" disabled={busy || !nickname.trim()} onClick={joinRoom}>{busy ? "입장 중…" : "입장하기"}</OnboardingAction>
+      <OnboardingAction variant="secondary" onClick={() => setPendingCode(null)}>이전으로</OnboardingAction>
+      {error && <p className="onboarding-error">{error}</p>}
+    </div>
+    <button className="onboarding-help onboarding-help-cyan" type="button" aria-label="도움말">?</button>
+  </main>;
 
   if (!onboardingStarted) return <main className="onboarding onboarding-initial">
     <img className="onboarding-bokeh" src="/brand/onboarding-bokeh.svg" alt="" />
@@ -555,6 +595,35 @@ export default function MultiplayerPoc() {
       <span className="onboarding-tagline">AI가 판정하는 실시간 밈 싱크로율 배틀</span>
       <span className="onboarding-start-copy">시작하려면 클릭하세요.</span>
     </button>
+    <button className="onboarding-help onboarding-help-cyan" type="button" aria-label="도움말">?</button>
+  </main>;
+
+  if (showCreateProgress) return <main className="onboarding onboarding-room-screen">
+    <img className="onboarding-logo onboarding-room-logo" src="/brand/likememe-logo.png" alt="LikeMEME" />
+    <div className="onboarding-create-progress" role="status" aria-live="polite">
+      <span aria-hidden="true">✦</span>
+      <p>방 만드는 중 . . .</p>
+    </div>
+    <div className="onboarding-room-actions onboarding-room-actions-single">
+      <OnboardingAction variant="secondary" onClick={() => {
+        createRequestSequenceRef.current += 1;
+        setShowCreateProgress(false);
+      }}>이전으로</OnboardingAction>
+    </div>
+    <button className="onboarding-help onboarding-help-cyan" type="button" aria-label="도움말">?</button>
+  </main>;
+
+  if (showCodeEntry) return <main className="onboarding onboarding-room-screen">
+    <img className="onboarding-logo onboarding-room-logo" src="/brand/likememe-logo.png" alt="LikeMEME" />
+    <section className="onboarding-room-card" aria-labelledby="room-code-prompt">
+      <label id="room-code-prompt" htmlFor="room-code">초대 코드를 입력해주세요.</label>
+      <input id="room-code" className="onboarding-room-input onboarding-room-code-input" inputMode="numeric" maxLength={6} value={codeInput} autoFocus onChange={(event) => setCodeInput(event.target.value.replace(/\D/g, "").slice(0, 6))} onKeyDown={(event) => { if (event.key === "Enter") chooseRoom(); }} />
+    </section>
+    <div className="onboarding-room-actions">
+      <OnboardingAction variant="primary" onClick={chooseRoom}>다음으로</OnboardingAction>
+      <OnboardingAction variant="secondary" onClick={() => setShowCodeEntry(false)}>이전으로</OnboardingAction>
+      {error && <p className="onboarding-error">{error}</p>}
+    </div>
     <button className="onboarding-help onboarding-help-cyan" type="button" aria-label="도움말">?</button>
   </main>;
 
@@ -570,14 +639,7 @@ export default function MultiplayerPoc() {
     </section>
     <div className="onboarding-actions">
       <button className="onboarding-action onboarding-action-primary" type="button" disabled={busy} onClick={createRoom}>{busy ? "생성 중…" : "새 방 만들기"}</button>
-      <button className="onboarding-action onboarding-action-secondary" type="button" onClick={() => setShowCodeEntry((visible) => !visible)}>코드로 입장하기</button>
-      {showCodeEntry && <div className="onboarding-code-entry">
-        <label htmlFor="room-code">6자리 방 코드</label>
-        <div className="join-row">
-          <input id="room-code" className="code-input" inputMode="numeric" maxLength={6} value={codeInput} placeholder="000000" autoFocus onChange={(event) => setCodeInput(event.target.value.replace(/\D/g, "").slice(0, 6))} onKeyDown={(event) => { if (event.key === "Enter") chooseRoom(); }} />
-          <button className="onboarding-code-submit" type="button" onClick={chooseRoom}>입장</button>
-        </div>
-      </div>}
+      <button className="onboarding-action onboarding-action-secondary" type="button" onClick={() => setShowCodeEntry(true)}>코드로 입장하기</button>
       {error && <p className="onboarding-error">{error}</p>}
     </div>
     <button className="onboarding-help onboarding-help-pink" type="button" aria-label="도움말">?</button>

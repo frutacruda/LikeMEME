@@ -249,6 +249,130 @@ h2 { font-size: 18px; margin: 0; }
 .onboarding-code-submit { border: 0; border-radius: 14px; padding: 0 18px; color: #fff; background: #ff0a94; font-weight: 800; }
 .onboarding-error { margin: 0; padding: 10px 12px; border-radius: 10px; color: #ffd9ed; background: rgba(80,0,38,.75); font-size: 13px; text-align: center; }
 
+.onboarding-room-screen { background: #111a3d; }
+.onboarding-room-screen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 72% 70% at 58% 46%, rgba(125,61,255,.42) 0, rgba(66,144,255,.28) 24%, rgba(8,227,255,.14) 48%, rgba(6,117,139,.07) 74%, transparent 100%);
+}
+.onboarding-room-logo {
+  position: absolute;
+  z-index: 1;
+  top: 98px;
+  left: 50%;
+  width: 392px;
+  height: 196px;
+  transform: translateX(-50%);
+}
+.onboarding-room-card {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 50%;
+  display: flex;
+  box-sizing: border-box;
+  width: 720px;
+  transform: translate(-50%, -50%);
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 40px 44px;
+  overflow: hidden;
+  border-radius: 28px;
+  background: rgba(0,0,0,.4);
+  box-shadow: 0 20px 50px -8px rgba(23,13,31,.22);
+}
+.onboarding-room-card label {
+  color: #fff;
+  font: 500 18px/1.2 var(--font-geist-mono), "Courier New", monospace;
+}
+.onboarding-room-input {
+  box-sizing: border-box;
+  width: 632px;
+  height: 55px;
+  border: 0;
+  border-radius: 18px;
+  outline: none;
+  padding: 0 20px;
+  color: #fff;
+  background: rgba(0,0,0,.4);
+  font: 600 18px/1 var(--font-geist-mono), "Courier New", monospace;
+}
+.onboarding-room-input:focus { box-shadow: 0 0 0 2px #00e5ff; }
+.onboarding-room-code-input {
+  letter-spacing: .25em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.onboarding-room-actions {
+  position: absolute;
+  z-index: 2;
+  top: 626px;
+  left: 50%;
+  display: flex;
+  width: 422px;
+  transform: translateX(-50%);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 24px;
+}
+.onboarding-room-action {
+  position: relative;
+  width: 420px;
+  height: 54px;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  color: #fff;
+  background: transparent;
+}
+.onboarding-room-action img {
+  position: absolute;
+  inset: 0;
+  display: block;
+  pointer-events: none;
+}
+.onboarding-room-action span {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  display: flex;
+  width: 407px;
+  height: 43px;
+  align-items: center;
+  justify-content: center;
+  font: 700 24px/1 var(--font-geist-mono), "Courier New", monospace;
+  letter-spacing: -.48px;
+}
+.onboarding-room-action-primary span { background: #7c3dff; }
+.onboarding-room-action-secondary span { background: #111a3d; }
+.onboarding-room-action:hover:not(:disabled),
+.onboarding-room-action:focus-visible { filter: brightness(1.14); }
+.onboarding-create-progress {
+  position: absolute;
+  z-index: 1;
+  top: 315px;
+  left: 50%;
+  display: flex;
+  width: 480px;
+  height: 270px;
+  transform: translateX(-50%);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  text-align: center;
+  filter: drop-shadow(0 20px 25px rgba(23,13,31,.22));
+}
+.onboarding-create-progress span { color: #33ffd6; font-size: 42px; font-weight: 900; }
+.onboarding-create-progress p {
+  width: 252px;
+  margin: 0;
+  color: #fff;
+  font: 700 24px/1.2 var(--font-geist-mono), "Courier New", monospace;
+}
+
 @media (max-width: 520px) {
   .shell { padding: 14px; align-items: center; }
   .card { padding: 26px 22px; border-radius: 22px; }
@@ -271,4 +395,17 @@ h2 { font-size: 18px; margin: 0; }
   .onboarding-rule-list p { font-size: clamp(16px, 2.8vw, 22px); }
   .onboarding-actions { top: auto; bottom: 64px; width: min(calc(100% - 48px), 422px); }
   .onboarding-help { left: 20px; bottom: 16px; }
+  .onboarding-room-logo { top: 5%; width: 280px; height: 140px; }
+  .onboarding-room-card { top: 42%; width: min(calc(100% - 40px), 720px); padding: 28px 24px; }
+  .onboarding-room-input { width: 100%; }
+  .onboarding-create-progress { top: 28%; width: min(100%, 480px); height: 220px; }
+  .onboarding-room-actions { top: auto; bottom: 54px; }
+}
+
+@media (max-width: 470px) {
+  .onboarding-room-actions {
+    bottom: 48px;
+    transform: translateX(-50%) scale(.8);
+    transform-origin: bottom center;
+  }
 }
