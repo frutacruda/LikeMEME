@@ -489,7 +489,7 @@ export default function MultiplayerPoc() {
     setUploadState("idle");
     setUploadError(null);
     setShowCodeEntry(false);
-    setOnboardingStarted(true);
+    setOnboardingStarted(false);
   }
 
   if (!ready) return <main className="shell"><div className="card"><p>연결 중…</p></div></main>;
