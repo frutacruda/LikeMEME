@@ -88,7 +88,15 @@ function RoundResultView({
   );
 }
 
-function FinalResultView({ results, players }: { results: FinalResult[]; players: RoomPlayer[] }) {
+function FinalResultView({
+  results,
+  players,
+  onReturnToMain,
+}: {
+  results: FinalResult[];
+  players: RoomPlayer[];
+  onReturnToMain: () => void;
+}) {
   return (
     <main className="shell">
       <section className="card result-card">
@@ -108,6 +116,7 @@ function FinalResultView({ results, players }: { results: FinalResult[]; players
           })}
         </div>
         <p className="muted">5라운드 게임이 종료되었습니다.</p>
+        <button className="primary" type="button" onClick={onReturnToMain}>메인으로 돌아가기</button>
       </section>
     </main>
   );
@@ -124,6 +133,7 @@ export default function MultiplayerPoc() {
     prepare,
     schedule,
     retryCapture,
+    reset: resetCamera,
     prepareNextRound,
   } = useCameraCapture();
   const [ready, setReady] = useState(false);
@@ -456,10 +466,38 @@ export default function MultiplayerPoc() {
     }
   }
 
+  function returnToMain() {
+    snapshotRequestSequenceRef.current += 1;
+    roomCodeRef.current = null;
+    activeRoundIdRef.current = null;
+    scheduledRoundRef.current = null;
+    judgingRequestRef.current = null;
+    preparedForNextRef.current = null;
+    resetCamera();
+    localStorage.removeItem(ROOM_STORAGE_KEY);
+
+    const url = new URL(window.location.href);
+    url.searchParams.delete("room");
+    window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+
+    setRoom(null);
+    setPendingCode(null);
+    setCodeInput("");
+    setNickname("");
+    setBusy(false);
+    setError(null);
+    setUploadState("idle");
+    setUploadError(null);
+    setShowCodeEntry(false);
+    setOnboardingStarted(true);
+  }
+
   if (!ready) return <main className="shell"><div className="card"><p>연결 중…</p></div></main>;
   if (!authReady) return <main className="shell"><section className="card"><h1>연결할 수 없습니다</h1><p className="muted">Anonymous Sign-In과 환경변수를 확인해 주세요.</p>{error && <p className="error">{error}</p>}</section></main>;
 
-  if (room?.status === "finished") return <FinalResultView results={room.final_results} players={room.players} />;
+  if (room?.status === "finished") {
+    return <FinalResultView results={room.final_results} players={room.players} onReturnToMain={returnToMain} />;
+  }
 
   if (room?.status === "playing" && room.round && ["complete", "invalid"].includes(room.round.status)) {
     return <RoundResultView key={room.round.id} round={room.round} players={room.players} videoRef={videoRef} cameraError={cameraError ?? error} />;
