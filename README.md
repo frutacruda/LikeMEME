@@ -1,5 +1,7 @@
 # LikeMEME
 
+<img width="860" height="430" alt="LIKEMEME_logo" src="https://github.com/user-attachments/assets/b4e109e0-40fc-42cc-85eb-29675789c610" />
+
 **AI가 참가자들의 밈 따라하기 사진을 판정하는 2~4인 실시간 5라운드 웹 게임입니다.**
 
 ## 프로젝트 소개
