@@ -3,6 +3,7 @@
 :root {
   --background: #f7f4ef;
   --foreground: #1c1d21;
+  --lm-safe-area-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 @theme inline {
@@ -116,6 +117,106 @@ h2 { font-size: 18px; margin: 0; }
   background: radial-gradient(ellipse 67% 67% at 50% 50%, rgba(122,61,255,.48) 0, rgba(64,37,148,.315) 26%, rgba(34,25,94,.2325) 39%, rgba(5,13,41,.15) 52%, transparent 100%);
   pointer-events: none;
 }
+.next-round-screen {
+  background:
+    linear-gradient(106.7deg, rgba(125,61,255,.42) 5.2632%, rgba(5,8,23,.05) 42.105%, rgba(0,229,255,.26) 100%),
+    #111a3d;
+  animation: next-round-screen-in .35s ease both;
+}
+.next-round-header {
+  position: absolute;
+  z-index: 2;
+  top: 40px;
+  left: 64px;
+  display: flex;
+  box-sizing: border-box;
+  width: calc(100% - 128px);
+  height: 88px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  border: 1px solid rgba(0,229,255,.45);
+  border-radius: 16px;
+  background: rgba(17,26,61,.96);
+}
+.next-round-header img { display: block; width: 176px; height: 72px; object-fit: contain; }
+.next-round-header strong { font: 400 36px/normal var(--font-dos-iyagi), sans-serif; white-space: nowrap; }
+.next-round-content {
+  position: absolute;
+  inset: 0;
+  text-align: center;
+  pointer-events: none;
+}
+.next-round-logo {
+  position: absolute;
+  top: 170px;
+  left: 50%;
+  width: 460px;
+  height: 230px;
+  object-fit: contain;
+  transform: translateX(-50%);
+  animation: next-round-center-in .45s cubic-bezier(.22,.75,.2,1) .08s both;
+}
+.next-round-label {
+  position: absolute;
+  top: 414px;
+  left: 50%;
+  margin: 0;
+  font: 500 26px/normal var(--font-dos-gothic), sans-serif;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+.next-round-content h1 {
+  position: absolute;
+  top: 428px;
+  left: 50%;
+  margin: 0;
+  color: #fff;
+  font: 500 180px/normal var(--font-dos-gothic), sans-serif;
+  letter-spacing: 0;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  animation: next-round-number-in .4s cubic-bezier(.22,.75,.2,1) .16s both;
+}
+.next-round-primary-copy {
+  position: absolute;
+  top: 621px;
+  left: 50%;
+  margin: 0;
+  font: 400 32px/normal var(--font-dos-iyagi), sans-serif;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+.next-round-secondary-copy {
+  position: absolute;
+  top: 669px;
+  left: 50%;
+  margin: 0;
+  color: #8d97b8;
+  font: 500 18px/normal var(--font-dos-gothic), sans-serif;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+.next-round-progress {
+  position: absolute;
+  top: 764px;
+  left: 50%;
+  display: flex;
+  height: 28px;
+  align-items: center;
+  gap: 32px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  transform: translateX(-50%);
+}
+.next-round-progress li { display: grid; width: 16px; height: 16px; place-items: center; }
+.next-round-progress li.is-active { width: 28px; height: 28px; animation: next-round-dot-pop .4s cubic-bezier(.22,.75,.2,1) .3s both; }
+.next-round-progress img { display: block; }
+@keyframes next-round-screen-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes next-round-center-in { from { opacity: 0; transform: translateX(-50%) translateY(8px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+@keyframes next-round-number-in { from { opacity: 0; transform: translateX(-50%) scale(.92); } to { opacity: 1; transform: translateX(-50%) scale(1); } }
+@keyframes next-round-dot-pop { from { transform: scale(.7); } to { transform: scale(1); } }
 .play-logo {
   position: absolute;
   z-index: 1;
@@ -470,6 +571,145 @@ h2 { font-size: 18px; margin: 0; }
   white-space: nowrap;
   animation: live-result-reveal .4s ease both;
 }
+.round-winner-screen {
+  position: fixed;
+  z-index: 10;
+  inset: 0;
+  min-width: 320px;
+  overflow: hidden;
+  color: #fff;
+  background:
+    radial-gradient(ellipse 48% 68% at 44% 40%, rgba(255,47,179,.27), rgba(124,61,255,.16) 48%, transparent 78%),
+    #111a3d;
+  font-family: var(--font-dos-gothic), sans-serif;
+  opacity: 0;
+  animation: round-winner-enter .38s ease .9s both;
+}
+.round-winner-logo {
+  position: absolute;
+  top: 41px;
+  left: 64px;
+  width: 176px;
+  height: 72px;
+  object-fit: contain;
+}
+.round-winner-screen > h1 {
+  position: absolute;
+  top: 113px;
+  left: calc(50% - 375px);
+  margin: 0;
+  color: #ffd43b;
+  font: 400 42px/normal var(--font-dos-iyagi), sans-serif;
+  white-space: nowrap;
+}
+.round-winner-screen > h1 span { margin-left: 25px; }
+.round-winner-reference {
+  position: absolute;
+  top: 181px;
+  left: 83px;
+  width: 228px;
+  height: 166px;
+  border-radius: 14px;
+  object-fit: cover;
+  box-shadow: 0 0 40px rgba(0,0,0,.25);
+}
+.round-winner-layout {
+  position: absolute;
+  top: 113px;
+  left: calc(50% - 375px);
+  display: grid;
+  grid-template-columns: 751px 254px;
+  column-gap: 40px;
+  align-items: start;
+}
+.round-winner-stage {
+  display: grid;
+  box-sizing: border-box;
+  width: 751px;
+  height: 534px;
+  margin-top: 68px;
+  overflow: hidden;
+  border: 3px solid #ffd43b;
+  border-radius: 26px;
+  background: #000;
+}
+.round-winner-stage.winners-2 { grid-template-columns: repeat(2, 1fr); }
+.round-winner-stage.winners-3 { grid-template-columns: repeat(3, 1fr); }
+.round-winner-stage.winners-4 { grid-template-columns: repeat(2, 1fr); grid-template-rows: repeat(2, 1fr); }
+.round-winner-photo { min-width: 0; min-height: 0; overflow: hidden; background: #000; }
+.round-winner-photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.round-winner-info {
+  width: 254px;
+  text-align: center;
+}
+.round-winner-name {
+  margin: 0;
+  overflow: hidden;
+  font: 500 36px/normal var(--font-dos-gothic), sans-serif;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.round-winner-emblem {
+  position: relative;
+  width: 254px;
+  height: 380px;
+  margin-top: 63px;
+}
+.round-winner-star-outer,
+.round-winner-star-inner { position: absolute; display: block; }
+.round-winner-star-outer { top: 0; left: 0; width: 254.222px; height: 254.222px; }
+.round-winner-star-inner { top: 21px; left: 21px; width: 211.852px; height: 211.852px; }
+.round-winner-champion,
+.round-winner-badge-title,
+.round-winner-badge-name,
+.round-winner-sync { position: absolute; z-index: 1; left: 50%; transform: translateX(-50%); white-space: nowrap; }
+.round-winner-champion { top: 77px; color: #ffd43b; font: 400 16.477px/normal var(--font-dos-iyagi), sans-serif; }
+.round-winner-badge-title {
+  top: 94px;
+  color: #fff;
+  font: 400 44.724px/normal var(--font-dos-iyagi), sans-serif;
+  text-shadow: -6px 3px 0 rgba(0,229,255,.82), 6px 5px 0 rgba(255,47,179,.78);
+}
+.round-winner-badge-name { top: 151px; max-width: 170px; overflow: hidden; font: 400 18.831px/normal var(--font-dos-iyagi), sans-serif; text-overflow: ellipsis; }
+.round-winner-sync {
+  top: 214px;
+  box-sizing: border-box;
+  min-width: 121px;
+  padding: 9px 18px;
+  border: 2.354px solid #ffd43b;
+  color: #00e5ff;
+  background: #111a3d;
+  font: 400 16.477px/normal var(--font-dos-iyagi), sans-serif;
+}
+.round-winner-players {
+  position: absolute;
+  top: 771px;
+  left: 50%;
+  display: flex;
+  width: min(1135px, calc(100% - 48px));
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  transform: translateX(-50%);
+}
+.round-winner-players li {
+  display: flex;
+  box-sizing: border-box;
+  min-width: 0;
+  height: 52px;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: rgba(0,0,0,.7);
+}
+.round-winner-plus { color: #00e5ff; font: 500 18px/normal var(--font-dos-gothic), sans-serif; white-space: nowrap; }
+@keyframes round-winner-enter {
+  from { opacity: 0; transform: scale(.99); }
+  to { opacity: 1; transform: scale(1); }
+}
 .live-result-error {
   position: absolute;
   top: 820px;
@@ -488,6 +728,141 @@ h2 { font-size: 18px; margin: 0; }
   opacity: 0;
   pointer-events: none;
 }
+
+.final-reveal-screen,
+.final-ranking-screen {
+  position: relative;
+  box-sizing: border-box;
+  min-width: 320px;
+  min-height: 100svh;
+  overflow: hidden;
+  color: #fff;
+  font-family: var(--font-dos-gothic), sans-serif;
+}
+.final-reveal-screen {
+  background:
+    radial-gradient(ellipse 58% 68% at 47% 44%, rgba(255,46,178,.34), rgba(125,61,255,.17) 50%, rgba(65,34,139,.085) 75%, transparent 100%),
+    #111a3d;
+}
+.final-reveal-header {
+  position: absolute;
+  top: 40px;
+  left: 64px;
+  display: flex;
+  box-sizing: border-box;
+  width: calc(100% - 128px);
+  height: 88px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  border: 1px solid rgba(0,229,255,.45);
+  border-radius: 16px;
+  background: rgba(17,26,61,.96);
+}
+.final-reveal-header img { display: block; width: 176px; height: 72px; object-fit: contain; }
+.final-reveal-header strong { font: 400 36px/normal var(--font-dos-iyagi), sans-serif; white-space: nowrap; }
+.final-reveal-intro { position: absolute; top: 160px; left: 64px; }
+.final-reveal-intro h1 { margin: 0; font: 400 48px/normal var(--font-dos-iyagi), sans-serif; letter-spacing: 0; }
+.final-reveal-intro p { margin: 10px 0 0 2px; color: #8d97b8; font: 500 18px/normal var(--font-dos-gothic), sans-serif; }
+.final-nominee-grid {
+  position: absolute;
+  top: 294px;
+  left: 50%;
+  display: grid;
+  grid-template-columns: repeat(var(--final-player-count), 312px);
+  justify-content: center;
+  gap: 24px;
+  transform: translateX(-50%);
+}
+.final-nominee-grid.players-2 { --final-player-count: 2; }
+.final-nominee-grid.players-3 { --final-player-count: 3; }
+.final-nominee-grid.players-4 { --final-player-count: 4; }
+.final-nominee-card {
+  position: relative;
+  box-sizing: border-box;
+  width: 312px;
+  height: 410px;
+  overflow: hidden;
+  border: 2px solid var(--player-accent);
+  border-radius: 22px;
+  background: #0a0f24;
+}
+.final-nominee-card::before { content: ""; position: absolute; top: -2px; left: -2px; width: 312px; height: 8px; background: var(--player-accent); }
+.final-nominee-photo { position: absolute; top: 22px; left: 14px; width: 280px; height: 238px; overflow: hidden; border-radius: 16px; background: #000; }
+.final-nominee-photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.final-nominee-card h2 { position: absolute; top: 280px; left: 18px; max-width: 276px; margin: 0; overflow: hidden; font: 500 20px/normal var(--font-dos-gothic), sans-serif; text-overflow: ellipsis; white-space: nowrap; }
+.final-nominee-card > strong { position: absolute; top: 317px; left: 18px; color: #ffd43b; font: 500 18px/normal var(--font-dos-gothic), sans-serif; }
+.final-nominee-card > span { position: absolute; top: 361px; left: 18px; color: #00e5ff; font: 500 12px/normal var(--font-dos-gothic), sans-serif; animation: final-calculating 1s ease-in-out infinite alternate; }
+.final-reveal-countdown {
+  position: absolute;
+  top: 744px;
+  left: 64px;
+  width: calc(100% - 128px);
+  height: 112px;
+  border-radius: 20px;
+  background: #111a3d;
+}
+.final-reveal-countdown img { position: absolute; top: 8px; left: 20px; width: 210px; height: 96px; object-fit: contain; }
+.final-reveal-countdown p { position: absolute; top: 36px; left: 50%; margin: 0; font: 400 26px/normal var(--font-dos-iyagi), sans-serif; transform: translateX(-50%); white-space: nowrap; }
+.final-reveal-countdown strong { position: absolute; top: 13px; right: 250px; font: 500 64px/normal var(--font-dos-gothic), sans-serif; }
+@keyframes final-calculating { from { opacity: .48; } to { opacity: 1; } }
+
+.final-ranking-screen {
+  background:
+    radial-gradient(ellipse 62% 70% at 48% 43%, rgba(255,212,59,.3), rgba(255,129,119,.25) 17.5%, rgba(255,46,178,.2) 35%, rgba(125,61,255,.12) 72%, transparent 100%),
+    #0a0f24;
+  animation: final-ranking-in .45s ease both;
+}
+.final-ranking-header { position: absolute; top: 138px; left: 64px; display: flex; align-items: center; }
+.final-ranking-header > img { display: block; width: 240px; height: 120px; object-fit: contain; }
+.final-ranking-header > div { margin-left: 30px; }
+.final-ranking-header h1 { margin: 0; font: 400 54px/normal var(--font-dos-iyagi), sans-serif; letter-spacing: 0; white-space: nowrap; }
+.final-ranking-header p { margin: 8px 0 0 4px; color: #d9dff0; font: 500 16px/normal var(--font-dos-gothic), sans-serif; }
+.final-play-again { position: fixed; z-index: 2; top: 171px; right: 78px; width: 280px; height: 54px; border: 0; padding: 0; color: #fff; background: transparent; }
+.final-play-again img { position: absolute; inset: 0; display: block; pointer-events: none; }
+.final-play-again span { position: absolute; top: 6px; left: 4px; display: grid; width: 271px; height: 43px; place-items: center; background: #7c3dff; font: 400 24px/normal var(--font-dos-iyagi), sans-serif; letter-spacing: -.48px; }
+.final-play-again:hover,
+.final-play-again:focus-visible { filter: brightness(1.14); }
+.final-podium {
+  position: absolute;
+  top: 294px;
+  left: 50%;
+  display: flex;
+  height: 456px;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 96px;
+  transform: translateX(-50%);
+}
+.final-podium-card {
+  position: relative;
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  overflow: visible;
+  border-radius: 24px;
+  background: #111a3d;
+}
+.final-podium-card::before { content: ""; position: absolute; top: -2px; left: -2px; width: calc(100% + 4px); height: 10px; border-radius: 24px 24px 0 0; background: currentColor; }
+.final-podium-card.rank-1 { order: 2; width: 360px; height: 456px; border: 4px solid #ffd43b; color: #ffd43b; }
+.final-podium-card.rank-2 { order: 1; width: 332px; height: 340px; border: 2px solid #00e5ff; color: #00e5ff; }
+.final-podium-card.rank-3 { order: 3; width: 304px; height: 280px; border: 2px solid #d9ff4b; color: #d9ff4b; }
+.final-podium-rank { position: absolute; top: 28px; left: 22px; color: #fff; font: 500 64px/normal var(--font-dos-gothic), sans-serif; }
+.rank-1 .final-podium-rank { top: 26px; left: 20px; font-size: 88px; }
+.final-podium-card h2 { position: absolute; bottom: 60px; left: 22px; max-width: calc(100% - 44px); margin: 0; overflow: hidden; color: #fff; font: 400 28px/normal var(--font-dos-iyagi), sans-serif; text-overflow: ellipsis; white-space: nowrap; }
+.rank-1.final-podium-card h2 { bottom: 66px; left: 20px; font-size: 38px; }
+.final-podium-card > p { position: absolute; bottom: 28px; left: 22px; margin: 0; color: #ffd43b; font: 500 15px/normal var(--font-dos-gothic), sans-serif; white-space: nowrap; }
+.rank-1.final-podium-card > p { bottom: 28px; left: 20px; font-size: 18px; }
+.final-podium-card > p span { padding: 0 8px; }
+.final-champion-mark { position: absolute; top: 138px; left: 50%; display: flex; transform: translateX(-50%); flex-direction: column; align-items: center; color: #ffd43b; white-space: nowrap; }
+.final-champion-mark span { font: 500 72px/1 var(--font-dos-gothic), sans-serif; }
+.final-champion-mark small { margin-top: 8px; font: 500 10px/normal var(--font-dos-gothic), sans-serif; }
+.final-trophy { position: absolute; z-index: 1; right: -107px; bottom: -30px; width: 221px; height: 261px; overflow: hidden; }
+.final-trophy img { position: absolute; top: -15px; left: -82px; display: block; width: 389px; height: 389px; object-fit: contain; }
+.final-podium.entries-4 { gap: 24px; }
+.final-podium.entries-4 .final-podium-card { width: 300px; }
+.final-remaining { position: absolute; bottom: 44px; left: 50%; display: flex; gap: 12px; transform: translateX(-50%); }
+.final-remaining p { display: flex; gap: 18px; margin: 0; padding: 10px 16px; border: 1px solid rgba(255,255,255,.22); border-radius: 10px; color: #d9dff0; background: rgba(17,26,61,.8); font-size: 14px; white-space: nowrap; }
+@keyframes final-ranking-in { from { opacity: 0; } to { opacity: 1; } }
 .result-camera-preserve .camera-video { width: 100%; height: 100%; object-fit: cover; }
 @keyframes live-result-reveal {
   from { opacity: 0; transform: translate(-50%, 6px); }
@@ -958,11 +1333,64 @@ h2 { font-size: 18px; margin: 0; }
   font: 400 24px/normal var(--font-dos-iyagi), sans-serif;
 }
 
+/* Figma screens use a 1440 × 900 canvas. Keep that vertical canvas on shorter
+   desktop viewports and scroll instead of clipping its bottom breathing room. */
+.onboarding,
+.waiting-room-screen,
+.play-screen,
+.live-judging-screen,
+.round-winner-screen,
+.final-reveal-screen,
+.final-ranking-screen {
+  box-sizing: border-box;
+  min-height: max(100svh, 900px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding-bottom: calc(44px + var(--lm-safe-area-bottom));
+}
+
 @media (max-width: 1200px) {
+  .final-reveal-screen,
+  .final-ranking-screen { overflow: auto; padding: 24px 20px calc(64px + var(--lm-safe-area-bottom)); }
+  .final-reveal-header,
+  .final-reveal-intro,
+  .final-nominee-grid,
+  .final-reveal-countdown,
+  .final-ranking-header,
+  .final-podium,
+  .final-remaining {
+    position: relative;
+    inset: auto;
+    transform: none;
+  }
+  .final-reveal-header { width: 100%; height: 80px; padding: 0 16px; }
+  .final-reveal-header img { width: 150px; height: 62px; }
+  .final-reveal-header strong { font-size: clamp(24px, 5vw, 34px); }
+  .final-reveal-intro { margin-top: 34px; }
+  .final-reveal-intro h1 { font-size: clamp(34px, 6vw, 48px); }
+  .final-reveal-intro p { font-size: clamp(15px, 2.6vw, 18px); }
+  .final-nominee-grid { grid-template-columns: repeat(2, 312px); margin-top: 34px; }
+  .final-reveal-countdown { display: grid; width: 100%; height: auto; min-height: 112px; grid-template-columns: 210px 1fr 100px; align-items: center; margin-top: 40px; }
+  .final-reveal-countdown img,
+  .final-reveal-countdown p,
+  .final-reveal-countdown strong { position: static; transform: none; }
+  .final-reveal-countdown img { width: 190px; height: 88px; margin-left: 12px; }
+  .final-reveal-countdown p { justify-self: center; }
+  .final-reveal-countdown strong { justify-self: center; }
+  .final-ranking-header { width: 100%; flex-wrap: wrap; }
+  .final-ranking-header > img { width: 200px; height: 100px; }
+  .final-ranking-header h1 { font-size: clamp(38px, 7vw, 54px); }
+  .final-play-again { position: relative; inset: auto; margin-left: auto; }
+  .final-podium { width: 100%; height: auto; flex-wrap: wrap; align-items: flex-end; gap: 32px; margin-top: 44px; }
+  .final-podium-card.rank-1,
+  .final-podium-card.rank-2,
+  .final-podium-card.rank-3 { order: initial; }
+  .final-podium.entries-4 { gap: 24px; }
+  .final-remaining { width: max-content; max-width: 100%; flex-wrap: wrap; justify-content: center; margin: 32px auto 0; }
   .live-judging-screen {
     box-sizing: border-box;
     overflow: auto;
-    padding: 24px 20px 72px;
+    padding: 24px 20px calc(72px + var(--lm-safe-area-bottom));
   }
   .live-judging-header,
   .live-judging-grid,
@@ -982,6 +1410,59 @@ h2 { font-size: 18px; margin: 0; }
   .live-round-winner,
   .live-result-error { width: max-content; max-width: 100%; margin: 28px auto 0; transform: none; text-align: center; white-space: normal; }
   .live-round-winner { animation-name: live-result-reveal-responsive; }
+  .round-winner-screen {
+    box-sizing: border-box;
+    display: flex;
+    min-height: 100svh;
+    overflow: auto;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 20px calc(64px + var(--lm-safe-area-bottom));
+  }
+  .round-winner-logo {
+    position: static;
+    width: 150px;
+    height: 62px;
+    align-self: flex-start;
+  }
+  .round-winner-screen > h1 {
+    position: static;
+    margin-top: 20px;
+    font-size: clamp(28px, 5vw, 42px);
+    white-space: normal;
+    text-align: center;
+  }
+  .round-winner-reference {
+    position: static;
+    width: min(228px, 55vw);
+    height: auto;
+    margin-top: 24px;
+    aspect-ratio: 228 / 166;
+  }
+  .round-winner-layout {
+    position: static;
+    display: grid;
+    width: min(751px, 100%);
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    margin-top: 28px;
+  }
+  .round-winner-stage {
+    width: 100%;
+    height: auto;
+    margin-top: 0;
+    aspect-ratio: 751 / 534;
+  }
+  .round-winner-info { width: min(254px, 100%); margin: 28px 0 0; }
+  .round-winner-emblem { margin-top: 28px; }
+  .round-winner-players {
+    position: static;
+    display: grid;
+    width: min(751px, 100%);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 24px;
+    transform: none;
+  }
   @keyframes live-result-reveal-responsive {
     from { opacity: 0; transform: translateY(6px); }
     to { opacity: 1; transform: translateY(0); }
@@ -1004,8 +1485,54 @@ h2 { font-size: 18px; margin: 0; }
     box-sizing: border-box;
     min-width: 320px;
     overflow: auto;
-    padding: 24px 16px 72px;
+    min-height: 100svh;
+    padding: 24px 16px calc(72px + var(--lm-safe-area-bottom));
   }
+  .onboarding { min-height: 100svh; padding-bottom: calc(72px + var(--lm-safe-area-bottom)); }
+  .next-round-header {
+    position: relative;
+    inset: auto;
+    width: 100%;
+    height: 72px;
+    padding: 0 14px;
+  }
+  .next-round-header img { width: 132px; height: 54px; }
+  .next-round-header strong { font-size: clamp(22px, 5vw, 32px); }
+  .next-round-content {
+    position: relative;
+    inset: auto;
+    display: flex;
+    min-height: calc(100svh - 168px);
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 36px 0;
+  }
+  .next-round-logo,
+  .next-round-label,
+  .next-round-content h1,
+  .next-round-primary-copy,
+  .next-round-secondary-copy,
+  .next-round-progress {
+    position: relative;
+    inset: auto;
+    transform: none;
+  }
+  .next-round-logo {
+    width: min(72vw, 460px);
+    max-width: 100%;
+    height: auto;
+    margin-inline: auto;
+    aspect-ratio: 2 / 1;
+    animation-name: next-round-logo-in-responsive;
+  }
+  .next-round-label { margin-top: 14px; font-size: clamp(20px, 5vw, 26px); }
+  .next-round-content h1 { font-size: clamp(100px, 30vw, 180px); line-height: .95; animation-name: next-round-number-in-responsive; }
+  .next-round-primary-copy { margin-top: 26px; font-size: clamp(22px, 5.5vw, 32px); white-space: normal; }
+  .next-round-secondary-copy { margin-top: 10px; font-size: clamp(15px, 3.5vw, 18px); white-space: normal; }
+  .next-round-progress { margin-top: 52px; }
+  @keyframes next-round-logo-in-responsive { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes next-round-number-in-responsive { from { opacity: 0; transform: scale(.92); } to { opacity: 1; transform: scale(1); } }
   .round-intro-screen .play-logo,
   .round-intro-title,
   .round-intro-guide,
@@ -1041,7 +1568,8 @@ h2 { font-size: 18px; margin: 0; }
     box-sizing: border-box;
     min-width: 320px;
     overflow: auto;
-    padding: 28px 20px 92px;
+    min-height: 100svh;
+    padding: 28px 20px calc(92px + var(--lm-safe-area-bottom));
   }
   .waiting-room-header,
   .waiting-room-camera,
@@ -1080,10 +1608,46 @@ h2 { font-size: 18px; margin: 0; }
 }
 
 @media (max-width: 470px) {
+  .final-reveal-screen,
+  .final-ranking-screen { padding-right: 12px; padding-left: 12px; }
+  .final-reveal-header { height: 64px; padding: 0 10px; }
+  .final-reveal-header img { width: 105px; height: 46px; }
+  .final-reveal-header strong { font-size: 20px; }
+  .final-reveal-intro h1 { font-size: 30px; }
+  .final-nominee-grid { grid-template-columns: minmax(0, 312px); width: 100%; }
+  .final-reveal-countdown { grid-template-columns: 1fr; justify-items: center; padding: 14px 0; }
+  .final-reveal-countdown img { width: 150px; height: 70px; margin: 0; }
+  .final-reveal-countdown p { margin-top: 6px; font-size: 21px; }
+  .final-reveal-countdown strong { margin-top: 8px; font-size: 54px; }
+  .final-ranking-header { justify-content: center; text-align: center; }
+  .final-ranking-header > img { width: 160px; height: 80px; }
+  .final-ranking-header > div { width: 100%; margin: 12px 0 0; }
+  .final-ranking-header h1 { font-size: 36px; }
+  .final-ranking-header p { white-space: normal; }
+  .final-play-again { margin: 24px auto 0; }
+  .final-podium { flex-direction: column; align-items: center; }
+  .final-podium-card.rank-1 { order: 1; width: min(360px, 100%); }
+  .final-podium-card.rank-2 { order: 2; width: min(332px, 100%); }
+  .final-podium-card.rank-3 { order: 3; width: min(304px, 100%); }
+  .final-podium.entries-4 .final-podium-card { width: min(300px, 100%); }
+  .final-trophy { right: 8px; bottom: 14px; width: 160px; height: 190px; }
+  .final-trophy img { top: -11px; left: -59px; width: 282px; height: 282px; }
+  .final-remaining p { width: 100%; box-sizing: border-box; justify-content: space-between; gap: 8px; }
   .live-judging-screen { padding-right: 12px; padding-left: 12px; }
   .live-judging-header h1 { font-size: 27px; }
   .live-judging-header img { width: 120px; height: 50px; }
   .live-judging-grid { grid-template-columns: 312px; }
+  .round-winner-screen { padding-right: 12px; padding-left: 12px; }
+  .round-winner-logo { width: 120px; height: 50px; }
+  .round-winner-screen > h1 span { display: block; margin: 8px 0 0; }
+  .round-winner-stage { border-radius: 18px; }
+  .round-winner-name { font-size: 30px; }
+  .round-winner-players { grid-template-columns: 1fr; }
+  .next-round-header { height: 64px; padding: 0 10px; }
+  .next-round-header img { width: 105px; height: 46px; }
+  .next-round-header strong { font-size: 20px; }
+  .next-round-content { min-height: calc(100svh - 152px); padding-top: 28px; padding-bottom: 28px; }
+  .next-round-progress { gap: 22px; margin-top: 40px; }
   .play-player-status { grid-template-columns: 1fr; }
   .capture-reference { width: 62%; }
   .capture-countdown { margin-left: 32px; }

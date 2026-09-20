@@ -62,11 +62,13 @@ function PlayerStatusBar({ players, roundWins }: { players: RoomPlayer[]; roundW
 function RoundResultView({
   round,
   players,
+  roundWins,
   videoRef,
   cameraError,
 }: {
   round: RoundSnapshot;
   players: RoomPlayer[];
+  roundWins: Record<string, number>;
   videoRef: (node: HTMLVideoElement | null) => void;
   cameraError: string | null;
 }) {
@@ -101,10 +103,9 @@ function RoundResultView({
     return () => { active = false; };
   }, [round.id, round.status, supabase]);
 
-  const winners = round.scores
-    .filter((score) => score.is_winner)
-    .map((score) => players.find((player) => player.id === score.player_id)?.nickname)
-    .filter(Boolean);
+  const winnerScores = round.scores.filter((score) => score.is_winner);
+  const winnerNames = winnerScores.map((score) => players.find((player) => player.id === score.player_id)?.nickname ?? "플레이어");
+  const winnerSync = winnerScores[0] ? Math.round(winnerScores[0].total / 30 * 100) : 0;
 
   if (round.status === "invalid") return <main className="shell">
     <section className="card result-card">
@@ -158,7 +159,45 @@ function RoundResultView({
         </article>;
       })}
     </section>
-    {revealStep >= 4 && <p className="live-round-winner">ROUND {round.number} WINNER · {winners.join(" · ")}</p>}
+    {revealStep >= 4 && <section className="round-winner-screen" aria-label={`Round ${round.number} 우승자`}>
+      <img className="round-winner-logo" src="/brand/likememe-logo.png" alt="LikeMEME" />
+      <h1>ROUND {String(round.number).padStart(2, "0")} <span>WINNER</span></h1>
+      <img className="round-winner-reference" src={round.reference_image_path} alt={`Round ${round.number} 기준 짤`} />
+      <div className="round-winner-layout">
+        <div className={`round-winner-stage winners-${winnerScores.length}`}>
+          {winnerScores.map((score) => {
+            const player = players.find((item) => item.id === score.player_id);
+            return <div className="round-winner-photo" key={score.player_id}>
+              {photoUrls[score.player_id] && <img src={photoUrls[score.player_id]} alt={`${player?.nickname ?? "플레이어"}의 우승 사진`} />}
+            </div>;
+          })}
+        </div>
+        <div className="round-winner-info">
+          <p className="round-winner-name">{winnerNames.join(" · ")}</p>
+          <div className="round-winner-emblem">
+            <img className="round-winner-star-outer" src="/brand/winner-starburst-outer.svg" alt="" />
+            <img className="round-winner-star-inner" src="/brand/winner-starburst-inner.svg" alt="" />
+            <span className="round-winner-champion">ROUND CHAMPION</span>
+            <strong className="round-winner-badge-title" aria-hidden="true">WINNER</strong>
+            <span className="round-winner-badge-name">{winnerNames.join(" · ")}</span>
+            <span className="round-winner-sync">SYNC {winnerSync}%</span>
+          </div>
+        </div>
+      </div>
+      <ul className="round-winner-players" aria-label="플레이어 현재 승수">
+        {players.map((player) => {
+          const isWinner = winnerScores.some((score) => score.player_id === player.id);
+          return <li key={player.id}>
+            <span className="play-player-identity">
+              <span className="play-player-avatar" style={{ background: seatColors[player.seat - 1] }}>{player.nickname.slice(0, 1).toUpperCase()}</span>
+              <span className="play-player-nickname">{player.nickname}</span>
+              {isWinner && <span className="round-winner-plus">+ 1</span>}
+            </span>
+            <span className="play-player-wins">{roundWins[player.id] ?? 0}승</span>
+          </li>;
+        })}
+      </ul>
+    </section>}
     {round.number < 5 && <div className="result-camera-preserve"><video ref={videoRef} autoPlay muted playsInline className="camera-video" /></div>}
     {cameraError && <p className="live-result-error">{cameraError}</p>}
   </main>;
@@ -167,35 +206,107 @@ function RoundResultView({
 function FinalResultView({
   results,
   players,
+  finalRound,
   onReturnToMain,
 }: {
   results: FinalResult[];
   players: RoomPlayer[];
+  finalRound: RoundSnapshot | null;
   onReturnToMain: () => void;
 }) {
-  return (
-    <main className="shell">
-      <section className="card result-card">
-        <span className="eyebrow">GAME COMPLETE</span>
-        <h1>최종 결과</h1>
-        <div className="final-table">
-          {results.map((result) => {
-            const player = players.find((item) => item.id === result.player_id);
-            return (
-              <div className="final-row" key={result.player_id}>
-                <b>{result.rank}위</b>
-                <strong>{player?.nickname}</strong>
-                <span>{result.round_wins}승</span>
-                <span>누적 {result.cumulative_total}점</span>
-              </div>
-            );
-          })}
-        </div>
-        <p className="muted">5라운드 게임이 종료되었습니다.</p>
-        <button className="primary" type="button" onClick={onReturnToMain}>메인으로 돌아가기</button>
-      </section>
-    </main>
-  );
+  const supabase = useMemo(() => getSupabaseBrowserClient(), []);
+  const [countdown, setCountdown] = useState(3);
+  const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (countdown <= 0) return;
+    const timer = window.setTimeout(() => setCountdown((value) => value - 1), 1_000);
+    return () => window.clearTimeout(timer);
+  }, [countdown]);
+
+  useEffect(() => {
+    if (!finalRound) return;
+    let active = true;
+    void (async () => {
+      const { data, error } = await supabase.auth.getSession();
+      if (error || !data.session) return;
+      const response = await fetch(`/api/rounds/${finalRound.id}/photos`, {
+        headers: { Authorization: `Bearer ${data.session.access_token}` },
+      });
+      if (!response.ok) return;
+      const body = await response.json() as { photos: Array<{ playerId: string; signedUrl: string }> };
+      if (active) setPhotoUrls(Object.fromEntries(body.photos.map((photo) => [photo.playerId, photo.signedUrl])));
+    })().catch(() => undefined);
+    return () => { active = false; };
+  }, [finalRound, supabase]);
+
+  const podiumResults = results.filter((result) => result.rank <= 3);
+  const remainingResults = results.filter((result) => result.rank > 3);
+  const synchronization = (result: FinalResult) => Math.round(result.cumulative_total / 150 * 100);
+
+  if (countdown > 0) return <main className="final-reveal-screen">
+    <header className="final-reveal-header">
+      <img src="/brand/likememe-logo.png" alt="LikeMEME" />
+      <strong>FINAL RESULT</strong>
+    </header>
+    <section className="final-reveal-intro">
+      <h1>FINAL&nbsp;&nbsp; NOMINEES</h1>
+      <p>5라운드 누적 승수와 싱크로율을 최종 집계합니다</p>
+    </section>
+    <section className={`final-nominee-grid players-${players.length}`} aria-label="최종 순위 후보">
+      {players.map((player) => {
+        const result = results.find((item) => item.player_id === player.id);
+        return <article className="final-nominee-card" style={{ "--player-accent": seatColors[player.seat - 1] } as CSSProperties} key={player.id}>
+          <div className="final-nominee-photo">
+            {photoUrls[player.id] && <img src={photoUrls[player.id]} alt={`${player.nickname}의 마지막 라운드 사진`} />}
+          </div>
+          <h2>{player.nickname}</h2>
+          <strong>{result?.round_wins ?? 0} {(result?.round_wins ?? 0) === 1 ? "WIN" : "WINS"}</strong>
+          <span>CALCULATING...</span>
+        </article>;
+      })}
+    </section>
+    <footer className="final-reveal-countdown">
+      <img src="/brand/likememe-logo.png" alt="" />
+      <p>최종 1위 공개까지</p>
+      <strong aria-live="polite">{String(countdown).padStart(2, "0")}</strong>
+    </footer>
+  </main>;
+
+  return <main className="final-ranking-screen">
+    <header className="final-ranking-header">
+      <img src="/brand/likememe-logo.png" alt="LikeMEME" />
+      <div>
+        <h1>FINAL&nbsp;&nbsp; TOP 3</h1>
+        <p>승수 우선 · 동률 시 누적 싱크로율 순</p>
+      </div>
+      <button className="final-play-again" type="button" onClick={onReturnToMain}>
+        <img src="/brand/play-again-button.svg" alt="" />
+        <span>PLAY AGAIN</span>
+      </button>
+    </header>
+    <section className={`final-podium entries-${podiumResults.length}`} aria-label="최종 순위">
+      {podiumResults.map((result) => {
+        const player = players.find((item) => item.id === result.player_id);
+        return <article className={`final-podium-card rank-${result.rank}`} key={result.player_id}>
+          <strong className="final-podium-rank">{String(result.rank).padStart(2, "0")}</strong>
+          {result.rank === 1 && <div className="final-champion-mark" aria-label="LikeMEME champion">
+            <span aria-hidden="true">♛</span>
+            <small>LIKE MEME CHAMPION</small>
+          </div>}
+          <h2>{player?.nickname ?? "플레이어"}</h2>
+          <p>{result.round_wins} {result.round_wins === 1 ? "WIN" : "WINS"} <span>·</span> {synchronization(result)}% SYNC</p>
+          {result.rank === 1 && <div className="final-trophy"><img src="/brand/final-trophy.png" alt="우승 트로피" /></div>}
+        </article>;
+      })}
+    </section>
+    {remainingResults.length > 0 && <section className="final-remaining" aria-label="나머지 최종 순위">
+      {remainingResults.map((result) => {
+        const player = players.find((item) => item.id === result.player_id);
+        return <p key={result.player_id}><strong>{result.rank}위</strong><span>{player?.nickname ?? "플레이어"}</span><span>{result.round_wins}승</span><span>{synchronization(result)}% SYNC</span></p>;
+      })}
+    </section>}
+  </main>;
 }
 
 export default function MultiplayerPoc() {
@@ -611,19 +722,42 @@ export default function MultiplayerPoc() {
   if (!authReady) return <main className="shell"><section className="card"><h1>연결할 수 없습니다</h1><p className="muted">Anonymous Sign-In과 환경변수를 확인해 주세요.</p>{error && <p className="error">{error}</p>}</section></main>;
 
   if (room?.status === "finished") {
-    return <FinalResultView results={room.final_results} players={room.players} onReturnToMain={returnToMain} />;
+    return <FinalResultView results={room.final_results} players={room.players} finalRound={room.round} onReturnToMain={returnToMain} />;
   }
 
   if (room?.status === "playing" && room.round && ["complete", "invalid"].includes(room.round.status)) {
-    return <RoundResultView key={room.round.id} round={room.round} players={room.players} videoRef={videoRef} cameraError={cameraError ?? error} />;
+    return <RoundResultView key={room.round.id} round={room.round} players={room.players} roundWins={roundWins} videoRef={videoRef} cameraError={cameraError ?? error} />;
   }
 
   if (room?.status === "playing" && room.round) {
+    const currentRoundNumber = room.round.number;
     const showCaptureScreen = ["countdown", "capturing", "complete", "error"].includes(cameraPhase) || ownSubmitted || room.round.status === "judging";
+    const showNextRound = currentRoundNumber > 1 && room.round.status === "scheduled" && cameraPhase === "ready";
     const introReferenceVisible = cameraPhase === "observing";
 
-    return <main className={`play-screen ${showCaptureScreen ? "camera-capture-screen" : "round-intro-screen"}`}>
-      {!showCaptureScreen ? <>
+    return <main className={`play-screen ${showNextRound ? "next-round-screen" : showCaptureScreen ? "camera-capture-screen" : "round-intro-screen"}`}>
+      {showNextRound ? <>
+        <header className="next-round-header">
+          <img src="/brand/likememe-logo.png" alt="LikeMEME" />
+          <strong>STAGE BREAK</strong>
+        </header>
+        <section className="next-round-content" aria-labelledby="next-round-title">
+          <img className="next-round-logo" src="/brand/likememe-logo.png" alt="" />
+          <p className="next-round-label">NEXT&nbsp;&nbsp; ROUND</p>
+          <h1 id="next-round-title">{String(currentRoundNumber).padStart(2, "0")}</h1>
+          <p className="next-round-primary-copy">새로운 밈이 곧 공개됩니다</p>
+          <p className="next-round-secondary-copy">표정 · 포즈 · 스타일을 준비하세요</p>
+          <ol className="next-round-progress" aria-label={`전체 5라운드 중 다음 라운드 ${currentRoundNumber}`}>
+            {Array.from({ length: 5 }, (_, index) => {
+              const number = index + 1;
+              const active = number === currentRoundNumber;
+              return <li className={active ? "is-active" : ""} aria-current={active ? "step" : undefined} key={number}>
+                <img src={`/brand/next-round-dot${active ? "-active" : ""}.svg`} alt="" />
+              </li>;
+            })}
+          </ol>
+        </section>
+      </> : !showCaptureScreen ? <>
         <img className="play-logo" src="/brand/likememe-logo.png" alt="LikeMEME" />
         <h1 className="round-intro-title">ROUND {room.round.number}</h1>
         <p className="round-intro-guide">잠시후 라운드가 시작됩니다.<br />아래 사진을 완벽하게 따라해 엔딩 요정을 거머쥐세요!</p>
@@ -659,7 +793,7 @@ export default function MultiplayerPoc() {
         </>}
         {error && <p className="error">{error}</p>}
       </div>}
-      <PlayerStatusBar players={room.players} roundWins={roundWins} />
+      {!showNextRound && <PlayerStatusBar players={room.players} roundWins={roundWins} />}
     </main>;
   }
 
