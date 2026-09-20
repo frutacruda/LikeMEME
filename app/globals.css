@@ -101,6 +101,212 @@ h2 { font-size: 18px; margin: 0; }
 .final-row { display: grid; grid-template-columns: 52px 1fr 56px 100px; gap: 10px; align-items: center; padding: 14px; border-radius: 14px; background: #f8f6f2; }
 .final-row:first-child { background: #fff2a8; outline: 2px solid #f0c929; }
 
+.play-screen {
+  position: relative;
+  min-height: 100svh;
+  overflow: hidden;
+  color: #fff;
+  background: #111a3d;
+  font-family: var(--font-dos-gothic), sans-serif;
+}
+.round-intro-screen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 67% 67% at 50% 50%, rgba(122,61,255,.48) 0, rgba(64,37,148,.315) 26%, rgba(34,25,94,.2325) 39%, rgba(5,13,41,.15) 52%, transparent 100%);
+  pointer-events: none;
+}
+.play-logo {
+  position: absolute;
+  z-index: 1;
+  top: 48px;
+  left: 70px;
+  display: block;
+  width: 176px;
+  height: 72px;
+  object-fit: contain;
+}
+.round-intro-title {
+  position: absolute;
+  z-index: 1;
+  top: 158px;
+  left: 96px;
+  margin: 0;
+  color: #fff;
+  font: 500 72px/84px var(--font-dos-gothic), sans-serif;
+  letter-spacing: -1.5px;
+  white-space: nowrap;
+}
+.round-intro-guide {
+  position: absolute;
+  z-index: 1;
+  top: 168px;
+  left: 417px;
+  margin: 0;
+  color: #d7d7d7;
+  font: 500 24px/32px var(--font-dos-gothic), sans-serif;
+  white-space: nowrap;
+}
+.round-intro-reference {
+  position: absolute;
+  z-index: 1;
+  top: 280px;
+  left: 96px;
+  width: 735.612px;
+  height: 430.411px;
+  object-fit: cover;
+}
+.round-intro-countdown {
+  position: absolute;
+  z-index: 1;
+  top: 608px;
+  left: 1151px;
+  display: flex;
+  align-items: flex-end;
+  font-family: var(--font-dos-iyagi), sans-serif;
+  font-weight: 400;
+  white-space: nowrap;
+}
+.round-intro-countdown strong {
+  font: inherit;
+  font-size: 102.143px;
+  line-height: 1;
+}
+.round-intro-countdown span {
+  margin: 0 0 4px 5px;
+  font-size: 18.857px;
+  line-height: normal;
+}
+.play-player-status {
+  position: absolute;
+  z-index: 2;
+  top: 771px;
+  left: 153px;
+  display: flex;
+  width: 1135px;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.play-player-status li {
+  display: flex;
+  box-sizing: border-box;
+  min-width: 0;
+  height: 52px;
+  flex: 1 1 0;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: rgba(0,0,0,.7);
+}
+.play-player-identity { display: flex; min-width: 0; align-items: center; gap: 12px; }
+.play-player-avatar {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  place-items: center;
+  border-radius: 50%;
+  color: #111a3d;
+  font: 500 12px/normal var(--font-dos-gothic), sans-serif;
+}
+.play-player-nickname {
+  overflow: hidden;
+  color: #fff;
+  font: 500 18px/normal var(--font-pretendard), sans-serif;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.play-player-wins {
+  margin-left: 10px;
+  color: #fff;
+  font: 500 18px/normal var(--font-dos-gothic), sans-serif;
+  white-space: nowrap;
+}
+.capture-header {
+  position: absolute;
+  z-index: 2;
+  top: 40px;
+  left: 64px;
+  display: flex;
+  box-sizing: border-box;
+  width: 1312px;
+  height: 88px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  border-radius: 16px;
+  background: rgba(17,26,61,.96);
+}
+.capture-header .play-logo {
+  position: static;
+  width: 176px;
+  height: 72px;
+}
+.capture-header h1 {
+  margin: 0;
+  color: #fff;
+  font: 500 45px/normal var(--font-dos-gothic), sans-serif;
+  letter-spacing: 0;
+}
+.capture-reference {
+  position: absolute;
+  top: 228px;
+  left: 145px;
+  width: 362px;
+  height: 266px;
+  border-radius: 14px;
+  object-fit: cover;
+}
+.capture-camera {
+  position: absolute;
+  top: 228px;
+  left: 543px;
+  width: 751px;
+  height: 443px;
+  border-radius: 10px;
+}
+.capture-camera.is-parked {
+  position: fixed;
+  top: -10000px;
+  left: -10000px;
+  opacity: 0;
+  pointer-events: none;
+}
+.capture-camera .camera-video {
+  width: 100%;
+  height: 100%;
+  aspect-ratio: auto;
+  border-radius: 0;
+  object-fit: cover;
+}
+.capture-time-label {
+  position: absolute;
+  top: 528px;
+  left: 145px;
+  margin: 0;
+  font: 400 18.857px/normal var(--font-dos-iyagi), sans-serif;
+}
+.capture-countdown {
+  position: absolute;
+  top: 538px;
+  left: 296px;
+  font: 400 102.143px/1 var(--font-dos-iyagi), sans-serif;
+}
+.play-feedback {
+  position: absolute;
+  z-index: 4;
+  top: 690px;
+  left: 543px;
+  width: 751px;
+  text-align: center;
+}
+.play-feedback p { margin: 0; color: #fff; font-size: 14px; }
+.play-feedback .error { margin: 0; }
+.play-feedback .primary { width: auto; margin-top: 8px; }
+
 .waiting-room-screen {
   position: relative;
   min-height: 100svh;
@@ -553,6 +759,43 @@ h2 { font-size: 18px; margin: 0; }
 }
 
 @media (max-width: 900px), (max-height: 720px) {
+  .play-screen {
+    box-sizing: border-box;
+    min-width: 320px;
+    overflow: auto;
+    padding: 24px 16px 72px;
+  }
+  .round-intro-screen .play-logo,
+  .round-intro-title,
+  .round-intro-guide,
+  .round-intro-reference,
+  .round-intro-countdown,
+  .capture-header,
+  .capture-reference,
+  .capture-camera,
+  .capture-time-label,
+  .capture-countdown,
+  .play-feedback,
+  .play-player-status {
+    position: relative;
+    inset: auto;
+  }
+  .round-intro-screen .play-logo { width: 132px; height: 54px; }
+  .round-intro-title { margin-top: 28px; font-size: clamp(44px, 11vw, 64px); line-height: 1.1; }
+  .round-intro-guide { margin-top: 16px; font-size: clamp(16px, 3.5vw, 22px); line-height: 1.45; white-space: normal; }
+  .round-intro-reference { display: block; width: min(100%, 736px); height: auto; margin-top: 28px; aspect-ratio: 735.612 / 430.411; }
+  .round-intro-countdown { width: 100%; justify-content: flex-end; margin-top: 14px; }
+  .round-intro-countdown strong { font-size: 76px; }
+  .play-player-status { display: grid; width: 100%; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 34px; }
+  .capture-header { width: 100%; height: 72px; padding: 0 14px; }
+  .capture-header .play-logo { width: 132px; height: 54px; }
+  .capture-header h1 { font-size: clamp(28px, 7vw, 40px); }
+  .capture-reference { display: block; width: min(48%, 362px); height: auto; margin-top: 72px; aspect-ratio: 362 / 266; }
+  .capture-time-label { display: inline-block; margin: 22px 0 0; }
+  .capture-countdown { display: inline-block; margin-left: 48px; font-size: 76px; vertical-align: middle; }
+  .capture-camera { width: 100%; height: auto; margin-top: 24px; aspect-ratio: 751 / 443; }
+  .play-feedback { width: 100%; margin-top: 18px; }
+  .camera-capture-screen .play-player-status { margin-top: 28px; }
   .waiting-room-screen {
     box-sizing: border-box;
     min-width: 320px;
@@ -595,6 +838,9 @@ h2 { font-size: 18px; margin: 0; }
 }
 
 @media (max-width: 470px) {
+  .play-player-status { grid-template-columns: 1fr; }
+  .capture-reference { width: 62%; }
+  .capture-countdown { margin-left: 32px; }
   .waiting-room-screen { padding-right: 16px; padding-left: 16px; }
   .waiting-room-header { gap: 14px; }
   .waiting-room-logo { width: 96px; height: 48px; }

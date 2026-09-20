@@ -41,6 +41,24 @@ function OnboardingAction({
   );
 }
 
+function PlayerStatusBar({ players, roundWins }: { players: RoomPlayer[]; roundWins: Record<string, number> }) {
+  return (
+    <ul className="play-player-status" aria-label="플레이어 현재 승수">
+      {players.map((player) => (
+        <li key={player.id}>
+          <span className="play-player-identity">
+            <span className="play-player-avatar" style={{ background: seatColors[player.seat - 1] }}>
+              {player.nickname.slice(0, 1).toUpperCase()}
+            </span>
+            <span className="play-player-nickname">{player.nickname}</span>
+          </span>
+          <span className="play-player-wins">{roundWins[player.id] ?? 0}승</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function RoundResultView({
   round,
   players,
@@ -169,6 +187,7 @@ export default function MultiplayerPoc() {
   const [onboardingStarted, setOnboardingStarted] = useState(false);
   const [showCodeEntry, setShowCodeEntry] = useState(false);
   const [showCreateProgress, setShowCreateProgress] = useState(false);
+  const [roundWins, setRoundWins] = useState<Record<string, number>>({});
   const roomCodeRef = useRef<string | null>(null);
   const createRequestSequenceRef = useRef(0);
   const snapshotRequestSequenceRef = useRef(0);
@@ -260,6 +279,36 @@ export default function MultiplayerPoc() {
       void supabase.removeChannel(channel);
     };
   }, [loadSnapshot, room?.id, supabase]);
+
+  useEffect(() => {
+    if (!room?.id || room.status === "waiting") return;
+    let active = true;
+    void (async () => {
+      const { data: completedRounds, error: roundsError } = await supabase
+        .from("rounds")
+        .select("id")
+        .eq("room_id", room.id)
+        .eq("status", "complete");
+      if (roundsError) throw roundsError;
+      const roundIds = completedRounds.map((round) => round.id);
+      if (roundIds.length === 0) {
+        if (active) setRoundWins({});
+        return;
+      }
+      const { data: winningScores, error: scoresError } = await supabase
+        .from("round_scores")
+        .select("player_id")
+        .in("round_id", roundIds)
+        .eq("is_winner", true);
+      if (scoresError) throw scoresError;
+      const nextWins: Record<string, number> = {};
+      for (const score of winningScores) nextWins[score.player_id] = (nextWins[score.player_id] ?? 0) + 1;
+      if (active) setRoundWins(nextWins);
+    })().catch(() => {
+      if (active) setRoundWins({});
+    });
+    return () => { active = false; };
+  }, [room?.id, room?.round?.id, room?.round?.status, room?.status, supabase]);
 
   const ownSubmitted = Boolean(room?.round?.submitted_player_ids.includes(room.current_player_id));
 
@@ -532,29 +581,48 @@ export default function MultiplayerPoc() {
   }
 
   if (room?.status === "playing" && room.round) {
-    const referenceVisible = ["observing", "countdown", "capturing", "complete"].includes(cameraPhase);
-    const labels = {
-      idle: "카메라를 준비하는 중", requesting: "카메라 권한 확인 중", preparing: "카메라 준비 중", ready: `라운드 시작 대기 · ${cameraSeconds || ""}`,
-      observing: `짤 관찰 · ${cameraSeconds}`, countdown: `${cameraSeconds}`, capturing: "촬영 중", complete: "촬영 완료", error: "촬영 오류",
-    };
-    return <main className="game-shell"><section className="round-card">
-      <header><span className="eyebrow">ROUND {room.round.number} · {room.round.number}/5</span><h1>{labels[cameraPhase]}</h1></header>
-      <div className="round-grid">
-        <div><p className="panel-label">REFERENCE MEME</p><img className={`round-image ${referenceVisible ? "" : "reference-hidden"}`} src={room.round.reference_image_path} alt={`Round ${room.round.number} 따라하기 기준 짤`} /></div>
-        <div><p className="panel-label">MY CAMERA</p><div className="camera-frame">
-          <video ref={videoRef} autoPlay muted playsInline className={capture ? "hidden" : "camera-video"} />
-          {capture && <img src={capture.url} alt="자동 촬영된 내 사진" className="camera-video" />}
-          {cameraPhase === "countdown" && <span className="countdown">{cameraSeconds}</span>}
-        </div></div>
+    const showCaptureScreen = ["countdown", "capturing", "complete", "error"].includes(cameraPhase) || ownSubmitted || room.round.status === "judging";
+    const introReferenceVisible = cameraPhase === "observing";
+
+    return <main className={`play-screen ${showCaptureScreen ? "camera-capture-screen" : "round-intro-screen"}`}>
+      {!showCaptureScreen ? <>
+        <img className="play-logo" src="/brand/likememe-logo.png" alt="LikeMEME" />
+        <h1 className="round-intro-title">ROUND {room.round.number}</h1>
+        <p className="round-intro-guide">잠시후 라운드가 시작됩니다.<br />아래 사진을 완벽하게 따라해 엔딩 요정을 거머쥐세요!</p>
+        <img
+          className={`round-intro-reference ${introReferenceVisible ? "" : "reference-hidden"}`}
+          src={room.round.reference_image_path}
+          alt={`Round ${room.round.number} 따라하기 기준 짤`}
+        />
+        <div className="round-intro-countdown" aria-live="polite">
+          <strong>{cameraSeconds || 3}</strong><span>초 후 시작</span>
+        </div>
+      </> : <>
+        <header className="capture-header">
+          <img className="play-logo" src="/brand/likememe-logo.png" alt="LikeMEME" />
+          <h1>ROUND {String(room.round.number).padStart(2, "0")}</h1>
+        </header>
+        <img className="capture-reference" src={room.round.reference_image_path} alt={`Round ${room.round.number} 따라하기 기준 짤`} />
+        <p className="capture-time-label">제한 시간</p>
+        <strong className="capture-countdown" aria-live="polite">{cameraPhase === "countdown" ? cameraSeconds : 0}</strong>
+      </>}
+      <div className={`capture-camera camera-frame ${showCaptureScreen ? "" : "is-parked"}`}>
+        <video ref={videoRef} autoPlay muted playsInline className={capture ? "hidden" : "camera-video"} />
+        {capture && <img src={capture.url} alt="자동 촬영된 내 사진" className="camera-video" />}
       </div>
-      {cameraError && <p className="error">{cameraError}</p>}
-      {(cameraPhase === "idle" || cameraPhase === "error") && !capture && !ownSubmitted && <button className="primary" onClick={() => void retryCapture()}>촬영 오류 재시도</button>}
-      {uploadState === "uploading" && <p className="waiting-copy">사진 업로드 중…</p>}
-      {uploadState === "error" && <><p className="error">{uploadError}</p><button className="primary" onClick={() => void submitCapture()}>같은 사진 다시 업로드</button></>}
-      {(uploadState === "submitted" || ownSubmitted) && room.round.status === "scheduled" && <p className="waiting-copy">제출 완료 · 다른 플레이어를 기다리는 중… ({room.round.submitted_player_ids.length}/{room.players.length})</p>}
-      {room.round.status === "judging" && <p className="waiting-copy">Gemini AI 판정 중…</p>}
-      {error && <p className="error">{error}</p>}
-    </section></main>;
+      {(showCaptureScreen || cameraError || error) && <div className="play-feedback">
+        {cameraError && <p className="error">{cameraError}</p>}
+        {showCaptureScreen && <>
+          {(cameraPhase === "idle" || cameraPhase === "error") && !capture && !ownSubmitted && <button className="primary" onClick={() => void retryCapture()}>촬영 오류 재시도</button>}
+          {uploadState === "uploading" && <p>사진 업로드 중…</p>}
+          {uploadState === "error" && <><p className="error">{uploadError}</p><button className="primary" onClick={() => void submitCapture()}>같은 사진 다시 업로드</button></>}
+          {(uploadState === "submitted" || ownSubmitted) && room.round.status === "scheduled" && <p>제출 완료 · 다른 플레이어를 기다리는 중… ({room.round.submitted_player_ids.length}/{room.players.length})</p>}
+          {room.round.status === "judging" && <p>Gemini AI 판정 중…</p>}
+        </>}
+        {error && <p className="error">{error}</p>}
+      </div>}
+      <PlayerStatusBar players={room.players} roundWins={roundWins} />
+    </main>;
   }
 
   if (room) {

@@ -34,6 +34,13 @@ const notoSansKr = localFont({
   display: "swap",
 });
 
+const pretendard = localFont({
+  src: "./fonts/PretendardVariable.woff2",
+  variable: "--font-pretendard",
+  weight: "100 900",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "LikeMEME",
   description: "AI가 판정하는 실시간 밈 싱크로율 배틀",
@@ -54,7 +61,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="ko"
-      className={`${geistSans.variable} ${geistMono.variable} ${dosIyagiBoldface.variable} ${dosGothic.variable} ${notoSansKr.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${dosIyagiBoldface.variable} ${dosGothic.variable} ${notoSansKr.variable} ${pretendard.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
