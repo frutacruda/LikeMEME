@@ -8,7 +8,48 @@ import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { FinalResult, RoomPlayer, RoomSnapshot, RoundSnapshot } from "@/lib/supabase/types";
 
 const ROOM_STORAGE_KEY = "likememe.room-code";
+const ROOM_RECOVERY_TTL_MS = 60 * 60 * 1_000;
 const seatColors = ["#FF6B6B", "#4DABF7", "#51CF66", "#FFD43B"];
+
+type StoredRoomRecovery = {
+  code: string;
+  savedAt: number;
+};
+
+function clearRoomRecovery() {
+  localStorage.removeItem(ROOM_STORAGE_KEY);
+}
+
+function saveRoomRecovery(code: string) {
+  const recovery: StoredRoomRecovery = { code, savedAt: Date.now() };
+  localStorage.setItem(ROOM_STORAGE_KEY, JSON.stringify(recovery));
+}
+
+function readRoomRecovery() {
+  const stored = localStorage.getItem(ROOM_STORAGE_KEY);
+  if (!stored) return null;
+  try {
+    const parsed = JSON.parse(stored) as unknown;
+    if (!parsed || typeof parsed !== "object") {
+      clearRoomRecovery();
+      return null;
+    }
+    const recovery = parsed as Partial<StoredRoomRecovery>;
+    if (typeof recovery.code !== "string" || !/^\d{6}$/.test(recovery.code) || typeof recovery.savedAt !== "number") {
+      clearRoomRecovery();
+      return null;
+    }
+    const age = Date.now() - recovery.savedAt;
+    if (!Number.isFinite(age) || age < 0 || age > ROOM_RECOVERY_TTL_MS) {
+      clearRoomRecovery();
+      return null;
+    }
+    return { code: recovery.code, savedAt: recovery.savedAt };
+  } catch {
+    clearRoomRecovery();
+    return null;
+  }
+}
 
 function messageFrom(error: unknown) {
   if (error && typeof error === "object" && "message" in error) return String(error.message);
@@ -377,7 +418,6 @@ export default function MultiplayerPoc() {
     roomCodeRef.current = snapshot.code;
     setRoom(snapshot);
     setPendingCode(null);
-    localStorage.setItem(ROOM_STORAGE_KEY, snapshot.code);
     return snapshot;
   }, [supabase]);
 
@@ -388,8 +428,8 @@ export default function MultiplayerPoc() {
         await ensureAuthenticated();
         if (active) setAuthReady(true);
         const inviteCode = new URLSearchParams(window.location.search).get("room");
-        const savedCode = localStorage.getItem(ROOM_STORAGE_KEY);
-        const initialCode = inviteCode?.match(/^\d{6}$/)?.[0] ?? savedCode;
+        const storedRecovery = readRoomRecovery();
+        const initialCode = inviteCode?.match(/^\d{6}$/)?.[0] ?? storedRecovery?.code;
         if (initialCode) {
           try { await loadSnapshot(initialCode); }
           catch { if (active) setPendingCode(initialCode); }
@@ -656,7 +696,7 @@ export default function MultiplayerPoc() {
       roomCodeRef.current = snapshot.code;
       setRoom(snapshot);
       setPendingCode(null);
-      localStorage.setItem(ROOM_STORAGE_KEY, snapshot.code);
+      saveRoomRecovery(snapshot.code);
     });
   }
 
@@ -699,7 +739,7 @@ export default function MultiplayerPoc() {
     judgingRequestRef.current = null;
     preparedForNextRef.current = null;
     resetCamera();
-    localStorage.removeItem(ROOM_STORAGE_KEY);
+    clearRoomRecovery();
 
     const url = new URL(window.location.href);
     url.searchParams.delete("room");
