@@ -316,7 +316,7 @@ h2 { font-size: 18px; margin: 0; }
 .play-player-nickname {
   overflow: hidden;
   color: #fff;
-  font: 500 18px/normal var(--font-pretendard), sans-serif;
+  font: 500 18px/normal var(--font-dos-gothic), sans-serif;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
