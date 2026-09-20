@@ -572,7 +572,7 @@ export default function MultiplayerPoc() {
     if (!room) return;
     const url = `${window.location.origin}${window.location.pathname}?room=${room.code}`;
     try {
-      if (navigator.share) await navigator.share({ title: "LikeMEME", text: `방 코드 ${room.code}`, url });
+      if (navigator.share) await navigator.share({ title: "LikeMEME", url });
       else { await navigator.clipboard.writeText(url); setError("초대 링크를 복사했습니다."); }
     } catch (shareError) {
       if (shareError instanceof DOMException && shareError.name === "AbortError") return;
