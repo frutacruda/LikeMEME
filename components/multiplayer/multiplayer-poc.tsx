@@ -675,8 +675,11 @@ export default function MultiplayerPoc() {
     return <main className="waiting-room-screen">
       <header className="waiting-room-header">
         <img className="waiting-room-logo" src="/brand/likememe-logo.png" alt="LikeMEME" />
-        <button className="waiting-room-code" type="button" onClick={() => void shareRoom()} aria-label={`초대 코드 ${room.code}. 초대 링크 공유`}>
+        <span className="waiting-room-code" aria-label={`초대 코드 ${room.code}`}>
           {displayRoomCode}
+        </span>
+        <button className="waiting-room-share" type="button" onClick={() => void shareRoom()}>
+          <span>링크로 공유하기</span>
         </button>
       </header>
 
