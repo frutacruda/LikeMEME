@@ -2,7 +2,7 @@
 
 /* eslint-disable @next/next/no-img-element */
 
-import { type ButtonHTMLAttributes, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { type ButtonHTMLAttributes, type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useCameraCapture } from "@/components/camera/use-camera-capture";
 import { getSupabaseBrowserClient } from "@/lib/supabase/client";
 import type { FinalResult, RoomPlayer, RoomSnapshot, RoundSnapshot } from "@/lib/supabase/types";
@@ -70,60 +70,98 @@ function RoundResultView({
   videoRef: (node: HTMLVideoElement | null) => void;
   cameraError: string | null;
 }) {
-  const [revealStep, setRevealStep] = useState(round.status === "invalid" ? 4 : 1);
+  const supabase = useMemo(() => getSupabaseBrowserClient(), []);
+  const [revealStep, setRevealStep] = useState(round.status === "invalid" ? 4 : 0);
+  const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (round.status !== "complete") return;
     const timers = [
-      window.setTimeout(() => setRevealStep(2), 700),
-      window.setTimeout(() => setRevealStep(3), 1400),
-      window.setTimeout(() => setRevealStep(4), 2100),
+      window.setTimeout(() => setRevealStep(1), 50),
+      window.setTimeout(() => setRevealStep(2), 1_250),
+      window.setTimeout(() => setRevealStep(3), 2_450),
+      window.setTimeout(() => setRevealStep(4), 3_650),
     ];
     return () => timers.forEach(window.clearTimeout);
   }, [round.status]);
+
+  useEffect(() => {
+    if (round.status !== "complete") return;
+    let active = true;
+    void (async () => {
+      const { data, error } = await supabase.auth.getSession();
+      if (error || !data.session) return;
+      const response = await fetch(`/api/rounds/${round.id}/photos`, {
+        headers: { Authorization: `Bearer ${data.session.access_token}` },
+      });
+      if (!response.ok) return;
+      const body = await response.json() as { photos: Array<{ playerId: string; signedUrl: string }> };
+      if (active) setPhotoUrls(Object.fromEntries(body.photos.map((photo) => [photo.playerId, photo.signedUrl])));
+    })().catch(() => undefined);
+    return () => { active = false; };
+  }, [round.id, round.status, supabase]);
 
   const winners = round.scores
     .filter((score) => score.is_winner)
     .map((score) => players.find((player) => player.id === score.player_id)?.nickname)
     .filter(Boolean);
 
-  return (
-    <main className="shell">
-      <section className="card result-card">
-        <span className="eyebrow">ROUND {round.number} RESULT · {round.number}/5</span>
-        <h1>{round.status === "invalid" ? "라운드 무효" : "라운드 결과"}</h1>
-        {round.status === "invalid" ? (
-          <p className="error">AI 판정에 실패했습니다. 승리와 점수 없이 다음 라운드로 진행합니다.</p>
-        ) : (
-          <>
-            <div className="score-table">
-              {round.scores.map((score) => {
-                const player = players.find((item) => item.id === score.player_id);
-                return (
-                  <div className={`score-row ${revealStep >= 4 && score.is_winner ? "winner" : ""}`} key={score.player_id}>
-                    <strong>{player?.nickname}</strong>
-                    <span>표정 {score.expression * 10}%</span>
-                    <span>{revealStep >= 2 ? `포즈 ${score.pose * 10}%` : "포즈 ···"}</span>
-                    <span>{revealStep >= 3 ? `스타일 ${score.style * 10}%` : "스타일 ···"}</span>
-                    <b>{revealStep >= 4 ? `${Math.round(score.total / 30 * 100)}%` : "···"}</b>
-                  </div>
-                );
-              })}
-            </div>
-            {revealStep >= 4 && <p className="winner-copy">Round {round.number} Winner: {winners.join(" · ")}</p>}
-          </>
-        )}
-        {round.number < 5 && (
-          <>
-            <p className="waiting-copy">다음 라운드 카메라 준비 및 자동 진행 중…</p>
-            <div className="camera-frame result-camera"><video ref={videoRef} autoPlay muted playsInline className="camera-video" /></div>
-            {cameraError && <p className="error">{cameraError}</p>}
-          </>
-        )}
-        {round.number === 5 && <p className="waiting-copy">최종 결과를 계산하는 중…</p>}
-      </section>
-    </main>
-  );
+  if (round.status === "invalid") return <main className="shell">
+    <section className="card result-card">
+      <span className="eyebrow">ROUND {round.number} RESULT · {round.number}/5</span>
+      <h1>라운드 무효</h1>
+      <p className="error">AI 판정에 실패했습니다. 승리와 점수 없이 다음 라운드로 진행합니다.</p>
+      {round.number < 5 && <div className="result-camera-preserve"><video ref={videoRef} autoPlay muted playsInline className="camera-video" /></div>}
+      {cameraError && <p className="error">{cameraError}</p>}
+    </section>
+  </main>;
+
+  return <main className="live-judging-screen">
+    <header className="live-judging-header">
+      <img src="/brand/likememe-logo.png" alt="LikeMEME" />
+      <h1>ROUND {String(round.number).padStart(2, "0")}</h1>
+    </header>
+    <section className={`live-judging-grid players-${round.scores.length}`} aria-label={`Round ${round.number} 점수 결과`}>
+      {round.scores.map((score) => {
+        const player = players.find((item) => item.id === score.player_id);
+        const accent = seatColors[(player?.seat ?? 1) - 1];
+        const categories = [
+          { label: "표정", score: score.expression, step: 1 },
+          { label: "포즈", score: score.pose, step: 2 },
+          { label: "스타일", score: score.style, step: 3 },
+        ];
+        return <article
+          className={`live-judge-card ${revealStep >= 4 && score.is_winner ? "is-winner" : ""}`}
+          style={{ "--player-accent": accent } as CSSProperties}
+          key={score.player_id}
+        >
+          <div className="live-judge-accent" />
+          <div className="live-judge-photo">
+            {photoUrls[score.player_id] && <img src={photoUrls[score.player_id]} alt={`${player?.nickname ?? "플레이어"}의 이번 라운드 사진`} />}
+          </div>
+          <h2>{player?.nickname}</h2>
+          <div className="live-judge-categories">
+            {categories.map((category) => {
+              const revealed = revealStep >= category.step;
+              return <div className={`live-score-line ${revealed ? "is-revealed" : ""}`} key={category.label}>
+                <span className="live-score-label">{category.label}</span>
+                <span className="live-score-track"><span style={{ width: revealed ? `${category.score * 10}%` : "0%" }} /></span>
+                <strong>{revealed ? category.score : "–"}</strong>
+              </div>;
+            })}
+          </div>
+          <div className="live-judge-divider" />
+          <div className={`live-overall ${revealStep >= 4 ? "is-revealed" : ""}`}>
+            <span>유사도</span>
+            <strong>{revealStep >= 4 ? `${Math.round(score.total / 30 * 100)}%` : "···"}</strong>
+          </div>
+        </article>;
+      })}
+    </section>
+    {revealStep >= 4 && <p className="live-round-winner">ROUND {round.number} WINNER · {winners.join(" · ")}</p>}
+    {round.number < 5 && <div className="result-camera-preserve"><video ref={videoRef} autoPlay muted playsInline className="camera-video" /></div>}
+    {cameraError && <p className="live-result-error">{cameraError}</p>}
+  </main>;
 }
 
 function FinalResultView({

@@ -307,6 +307,193 @@ h2 { font-size: 18px; margin: 0; }
 .play-feedback .error { margin: 0; }
 .play-feedback .primary { width: auto; margin-top: 8px; }
 
+.live-judging-screen {
+  position: relative;
+  min-height: 100svh;
+  overflow: hidden;
+  color: #fff;
+  background: #111a3d;
+  font-family: var(--font-dos-gothic), sans-serif;
+}
+.live-judging-header {
+  position: absolute;
+  top: 40px;
+  left: 64px;
+  display: flex;
+  box-sizing: border-box;
+  width: 1312px;
+  height: 88px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  border-radius: 16px;
+  background: rgba(17,26,61,.96);
+}
+.live-judging-header img { display: block; width: 176px; height: 72px; object-fit: contain; }
+.live-judging-header h1 {
+  margin: 0;
+  font: 500 45px/normal var(--font-dos-gothic), sans-serif;
+  letter-spacing: 0;
+}
+.live-judging-grid {
+  position: absolute;
+  top: 169px;
+  right: 56px;
+  left: 64px;
+  display: grid;
+  grid-template-columns: repeat(var(--result-player-count, 4), 312px);
+  justify-content: center;
+  gap: 24px;
+}
+.live-judging-grid.players-2 { --result-player-count: 2; }
+.live-judging-grid.players-3 { --result-player-count: 3; }
+.live-judging-grid.players-4 { --result-player-count: 4; }
+.live-judge-card {
+  position: relative;
+  box-sizing: border-box;
+  width: 312px;
+  height: 590px;
+  overflow: hidden;
+  border: 2px solid var(--player-accent);
+  border-radius: 22px;
+  background: #0a0f24;
+  transition: box-shadow .3s ease, transform .3s ease;
+}
+.live-judge-card.is-winner { box-shadow: 0 0 22px color-mix(in srgb, var(--player-accent) 72%, transparent); }
+.live-judge-accent {
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  width: 312px;
+  height: 8px;
+  background: var(--player-accent);
+}
+.live-judge-photo {
+  position: absolute;
+  top: 22px;
+  left: 14px;
+  width: 280px;
+  height: 238px;
+  overflow: hidden;
+  border-radius: 16px;
+  background: #000;
+}
+.live-judge-photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.live-judge-card h2 {
+  position: absolute;
+  top: 280px;
+  left: 18px;
+  max-width: 276px;
+  margin: 0;
+  overflow: hidden;
+  font: 500 20px/normal var(--font-dos-gothic), sans-serif;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.live-judge-categories {
+  position: absolute;
+  top: 330px;
+  left: 18px;
+  display: grid;
+  gap: 29px;
+}
+.live-score-line {
+  display: grid;
+  width: 272px;
+  height: 25px;
+  grid-template-columns: 52px 174px 24px;
+  align-items: center;
+  column-gap: 12px;
+}
+.live-score-label { color: #8d97b8; font-size: 14px; line-height: normal; }
+.live-score-track {
+  display: block;
+  width: 174px;
+  height: 10px;
+  overflow: hidden;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--player-accent) 25%, #111a3d);
+}
+.live-score-track > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--player-accent);
+  transition: width .85s cubic-bezier(.22,.75,.2,1);
+}
+.live-score-line strong {
+  margin-left: 6px;
+  opacity: 0;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: normal;
+  transform: translateY(3px);
+  transition: opacity .25s ease .58s, transform .25s ease .58s;
+}
+.live-score-line.is-revealed strong { opacity: 1; transform: translateY(0); }
+.live-judge-divider {
+  position: absolute;
+  top: 502px;
+  left: 18px;
+  width: 272px;
+  height: 1px;
+  background: var(--player-accent);
+}
+.live-overall {
+  position: absolute;
+  top: 518px;
+  left: 32px;
+  display: flex;
+  width: 256px;
+  align-items: center;
+  justify-content: space-between;
+}
+.live-overall span { color: #00e5ff; font-size: 24px; line-height: normal; }
+.live-overall strong {
+  opacity: 0;
+  font-size: 44px;
+  font-weight: 500;
+  line-height: normal;
+  transform: scale(.92);
+  transform-origin: right center;
+  transition: opacity .4s ease, transform .55s cubic-bezier(.22,.75,.2,1);
+}
+.live-overall.is-revealed strong { opacity: 1; transform: scale(1); }
+.live-round-winner {
+  position: absolute;
+  top: 785px;
+  left: 50%;
+  margin: 0;
+  transform: translateX(-50%);
+  color: #00e5ff;
+  font: 500 20px/normal var(--font-dos-gothic), sans-serif;
+  white-space: nowrap;
+  animation: live-result-reveal .4s ease both;
+}
+.live-result-error {
+  position: absolute;
+  top: 820px;
+  left: 50%;
+  margin: 0;
+  transform: translateX(-50%);
+  color: #ffb4d8;
+}
+.result-camera-preserve {
+  position: fixed;
+  top: -10000px;
+  left: -10000px;
+  width: 120px;
+  height: 160px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
+}
+.result-camera-preserve .camera-video { width: 100%; height: 100%; object-fit: cover; }
+@keyframes live-result-reveal {
+  from { opacity: 0; transform: translate(-50%, 6px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
 .waiting-room-screen {
   position: relative;
   min-height: 100svh;
@@ -747,6 +934,36 @@ h2 { font-size: 18px; margin: 0; }
   font: 400 24px/normal var(--font-dos-iyagi), sans-serif;
 }
 
+@media (max-width: 1200px) {
+  .live-judging-screen {
+    box-sizing: border-box;
+    overflow: auto;
+    padding: 24px 20px 72px;
+  }
+  .live-judging-header,
+  .live-judging-grid,
+  .live-round-winner,
+  .live-result-error {
+    position: relative;
+    inset: auto;
+  }
+  .live-judging-header { width: 100%; height: 80px; padding: 0 16px; }
+  .live-judging-header img { width: 150px; height: 62px; }
+  .live-judging-header h1 { font-size: 38px; }
+  .live-judging-grid {
+    grid-template-columns: repeat(2, 312px);
+    justify-content: center;
+    margin-top: 40px;
+  }
+  .live-round-winner,
+  .live-result-error { width: max-content; max-width: 100%; margin: 28px auto 0; transform: none; text-align: center; white-space: normal; }
+  .live-round-winner { animation-name: live-result-reveal-responsive; }
+  @keyframes live-result-reveal-responsive {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+
 @media (max-width: 520px) {
   .shell { padding: 14px; align-items: center; }
   .card { padding: 26px 22px; border-radius: 22px; }
@@ -838,6 +1055,10 @@ h2 { font-size: 18px; margin: 0; }
 }
 
 @media (max-width: 470px) {
+  .live-judging-screen { padding-right: 12px; padding-left: 12px; }
+  .live-judging-header h1 { font-size: 27px; }
+  .live-judging-header img { width: 120px; height: 50px; }
+  .live-judging-grid { grid-template-columns: 312px; }
   .play-player-status { grid-template-columns: 1fr; }
   .capture-reference { width: 62%; }
   .capture-countdown { margin-left: 32px; }
