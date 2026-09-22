@@ -21,33 +21,40 @@ Figma MCP는 재사용 가능한 컴포넌트와 변형을 Figma에 직접 구�
 
 ## 사용한 AI 툴
 - **Gemini 3.5 Flash-Lite**
-    원본 밈과 참가자 촬영 이미지의 멀티모달 분석 및 유사도 점수 산출
+
+  원본 밈과 참가자 촬영 이미지의 멀티모달 분석 및 유사도 점수 산출
     
 - **Codex**
-    Next.js 기반 웹 서비스 구현, 디버깅, 코드 검증 및 배포 과정 보조
+
+  Next.js 기반 웹 서비스 구현, 디버깅, 코드 검증 및 배포 과정 보조
     게임 규칙과 AI 채점 기준을 구체화, 서비스 컨셉과 맞는 로고 및 UI 컴포넌트 디자인 제작 보조
     
 - **Figma MCP**
-    재사용 가능한 컴포넌트와 변형을 Figma에 직접 구성하고 디자인 시스템 정리
+
+  재사용 가능한 컴포넌트와 변형을 Figma에 직접 구성하고 디자인 시스템 정리
     Figma 디자인을 개발 환경과 연결해 UI 구현 과정에 활용
     
 - **Lovable**
-    초기 아이디어를 바탕으로 웹 UI 프로토타입을 빠르게 생성하고, 화면 구성과 사용자 플로우를 구체화하는 디자인 탐색 과정에 활용
+
+  초기 아이디어를 바탕으로 웹 UI 프로토타입을 빠르게 생성하고, 화면 구성과 사용자 플로우를 구체화하는 디자인 탐색 과정에 활용
     
 - **Suno**
-    게임의 분위기와 플레이 경험에 맞는 BGM을 생성해 라운드 진행 및 게임 몰입도를 높이는 사운드 요소 제작에 활용
+
+  게임의 분위기와 플레이 경험에 맞는 BGM을 생성해 라운드 진행 및 게임 몰입도를 높이는 사운드 요소 제작에 활용
 
 
 ## 기술 스택
-- **`Next.js` / `React` / `TypeScript`** — 프론트엔드
-- **Tailwind CSS** — UI
-- **`Supabase`** — 백엔드·DB·실시간 통신·스토리지
-- **`Gemini 3.5 Flash-Lite`** — AI 이미지 판정
-- **`Vercel`** — 서버·배포
-- **GitHub** — 버전 관리
-- **Figma** — UI/UX 디자인
+- ![Next JS](https://img.shields.io/badge/Next-%23000.svg?style=for-the-badge&logo=next.js&logoColor=white) ![React](https://img.shields.io/badge/react-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB) ![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white) — 프론트엔드
+- ![TailwindCSS](https://img.shields.io/badge/tailwindcss-%2338B2AC.svg?style=for-the-badge&logo=tailwind-css&logoColor=white) — UI
+- ![Supabase](https://img.shields.io/badge/Supabase-%233ECF8E.svg?style=for-the-badge&logo=supabase&logoColor=white) — 백엔드·DB·실시간 통신·스토리지
+- ![Google Gemini](https://img.shields.io/badge/google%20gemini-%238E75B2.svg?style=for-the-badge&logo=google%20gemini&logoColor=white) **`Gemini 3.5 Flash-Lite`** — AI 이미지 판정
+- ![Vercel](https://img.shields.io/badge/vercel-%23000000.svg?style=for-the-badge&logo=vercel&logoColor=white) — 서버·배포
+- ![GitHub](https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white) — 버전 관리
+- ![Figma](https://img.shields.io/badge/figma-%23F24E1E.svg?style=for-the-badge&logo=figma&logoColor=white) — UI/UX 디자인
 
 
 ## 팀
 github.com/glace0x
 github.com/strongwest
+<td><a href="https://github.com/glace0x">@glace0x</a></td>
+<td><a href="https://github.com/strongwest">@strongwest</a></td>
