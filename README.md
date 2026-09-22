@@ -49,4 +49,5 @@ Figma MCP는 재사용 가능한 컴포넌트와 변형을 Figma에 직접 구�
 
 
 ## 팀
-
+github.com/glace0x
+github.com/strongwest
